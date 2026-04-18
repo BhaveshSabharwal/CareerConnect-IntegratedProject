@@ -64,15 +64,71 @@ const OverviewTab = () => (
 );
 
 const ActivityTab = () => (
-  <GlassCard>
-    <p className="text-slate-400">Activity timeline goes here.</p>
-  </GlassCard>
+  <div className="space-y-4">
+    <GlassCard>
+      <h3 className="text-lg font-semibold text-white mb-4">This Week</h3>
+      <div className="space-y-4">
+        {[
+          { text: "Completed Mock Interview for Frontend role", time: "2 hours ago", color: "bg-[#10b981]" },
+          { text: "Updated resume with React experience", time: "Yesterday", color: "bg-[#0ea5e9]" },
+          { text: "Saved 3 new job postings", time: "2 days ago", color: "bg-[#8b5cf6]" }
+        ].map((item, i) => (
+          <div key={i} className="flex items-start gap-3 border-b border-white/5 pb-4 last:border-0 last:pb-0">
+            <div className={`w-2 h-2 mt-2 rounded-full ${item.color}`}></div>
+            <div>
+              <p className="text-sm text-slate-200">{item.text}</p>
+              <p className="text-xs text-slate-500">{item.time}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </GlassCard>
+  </div>
 );
 
 const AISuggestionsTab = () => (
-  <GlassCard>
-    <p className="text-slate-400">AI personalized job and skill suggestions.</p>
-  </GlassCard>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <GlassCard>
+      <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+        <span className="text-[#0ea5e9]">✦</span> Recommended Roles
+      </h3>
+      <p className="text-sm text-slate-400 mb-4">Based on your recent React and UI/UX activities.</p>
+      <div className="space-y-3">
+        {['Senior Frontend Engineer', 'UI Developer', 'Product Designer'].map((role, i) => (
+          <div key={i} className="p-3 rounded-lg border border-white/10 bg-white/5 flex justify-between items-center hover:border-white/20 transition-colors">
+            <span className="text-sm text-slate-200">{role}</span>
+            <button className="text-xs text-[#0ea5e9] hover:underline">View</button>
+          </div>
+        ))}
+      </div>
+    </GlassCard>
+    <GlassCard>
+      <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+        <span className="text-[#8b5cf6]">✦</span> Skill Gap Analysis
+      </h3>
+      <p className="text-sm text-slate-400 mb-4">Skills to improve for your target roles.</p>
+      <div className="space-y-4">
+        <div>
+          <div className="flex justify-between text-sm mb-1">
+            <span className="text-slate-200">TypeScript</span>
+            <span className="text-[#8b5cf6]">60%</span>
+          </div>
+          <div className="w-full h-2 bg-black/30 rounded-full overflow-hidden">
+            <div className="h-full bg-[#8b5cf6] rounded-full" style={{ width: '60%' }}></div>
+          </div>
+        </div>
+        <div>
+          <div className="flex justify-between text-sm mb-1">
+            <span className="text-slate-200">GraphQL</span>
+            <span className="text-[#0ea5e9]">40%</span>
+          </div>
+          <div className="w-full h-2 bg-black/30 rounded-full overflow-hidden">
+            <div className="h-full bg-[#0ea5e9] rounded-full" style={{ width: '40%' }}></div>
+          </div>
+        </div>
+      </div>
+    </GlassCard>
+  </div>
 );
 
 const StatCard = ({ title, value, trend, icon: Icon, color }) => (
