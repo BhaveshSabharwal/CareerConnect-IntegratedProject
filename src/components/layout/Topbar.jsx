@@ -9,7 +9,6 @@ const Topbar = () => {
     { name: 'Explore', path: '/explorer', icon: Compass },
     { name: 'Jobs', path: '/jobs', icon: Briefcase },
     { name: 'Resume', path: '/resume', icon: FileText },
-    { name: 'Prep', path: '/prep', icon: MessageSquare },
   ];
 
   return (
@@ -35,15 +34,14 @@ const Topbar = () => {
                 }`
               }
             >
-              <item.icon size={16} />
               {item.name}
             </NavLink>
           ))}
         </nav>
 
         <div className="hidden md:flex items-center gap-4">
-          <FlatButton variant="outline" className="text-sm py-1.5 px-3">Log in</FlatButton>
-          <FlatButton variant="primary" className="text-sm py-1.5 px-3">Sign up</FlatButton>
+          <button className="text-sm font-medium text-white/80 hover:text-white px-4 py-2 transition-colors">Log in</button>
+          <FlatButton variant="primary" className="text-sm py-1.5 px-5 bg-blue-600 hover:bg-blue-700 text-white border-none rounded-lg shadow-lg shadow-blue-500/20">Sign Up</FlatButton>
         </div>
 
         <button className="md:hidden text-slate-300 hover:text-white">

@@ -1,103 +1,131 @@
 import React from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { ArrowRight, Sparkles, Target, Compass, Briefcase } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowRight, Sparkles, Briefcase, Building2, MousePointer2, Zap, LayoutGrid, CheckCircle2 } from 'lucide-react';
 import FlatButton from '../components/ui/FlatButton';
 
 const Home = () => {
-  const { scrollY } = useScroll();
-  const y1 = useTransform(scrollY, [0, 1000], [0, 200]);
-  const y2 = useTransform(scrollY, [0, 1000], [0, -100]);
-  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
-
   return (
-    <div className="w-full relative overflow-hidden">
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center pt-20 pb-32">
-        <div className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center">
+    <div className="w-full bg-[#020617] text-white overflow-hidden">
+      {/* Background Effects */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[120%] h-[120%] bg-[radial-gradient(ellipse_at_top_left,_rgba(59,130,246,0.05),transparent_50%)]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[120%] h-[120%] bg-[radial-gradient(ellipse_at_bottom_right,_rgba(139,92,246,0.05),transparent_50%)]"></div>
+
+        {/* Sweeping Light Lines */}
+        <div className="absolute top-1/4 -left-1/4 w-[150%] h-[1px] bg-gradient-to-r from-transparent via-blue-500/20 to-transparent -rotate-12 blur-sm"></div>
+        <div className="absolute top-1/3 -left-1/4 w-[150%] h-[2px] bg-gradient-to-r from-transparent via-purple-500/10 to-transparent -rotate-12 blur-md"></div>
+        <div className="absolute top-2/3 -left-1/4 w-[150%] h-[1px] bg-gradient-to-r from-transparent via-blue-400/20 to-transparent -rotate-12 blur-sm"></div>
+      </div>
+
+      <div className="relative z-10">
+        {/* Hero Section */}
+        <section className="min-h-screen flex flex-col items-center justify-center pt-32 pb-20 px-4 text-center">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="max-w-4xl mx-auto"
-            style={{ opacity }}
+            transition={{ duration: 0.8 }}
+            className="max-w-5xl mx-auto"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm text-[#0ea5e9] mb-8">
-              <Sparkles size={16} />
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-[#0ea5e9] text-sm font-medium mb-8">
+              <Sparkles size={14} />
               <span>AI-Powered Career Intelligence</span>
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 leading-tight">
+
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 leading-[1.1]">
               Build Your Future. <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0ea5e9] via-[#8b5cf6] to-[#10b981]">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-emerald-400">
                 One Smart Step at a Time.
               </span>
             </h1>
-            <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+
+            <p className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
               Discover your ideal path, craft standout resumes, and land your dream job with a single, intelligent platform designed for your growth.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <FlatButton variant="primary" className="text-lg px-8 py-4 w-full sm:w-auto">
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+              <FlatButton className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white border-none rounded-xl text-lg shadow-xl shadow-blue-500/25">
                 Start Your Journey <ArrowRight size={20} />
               </FlatButton>
-              <FlatButton variant="outline" className="text-lg px-8 py-4 w-full sm:w-auto">
-                Explore Careers
-              </FlatButton>
+              <button className="px-8 py-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all text-lg font-medium text-white flex items-center gap-2">
+                Explore Careers <ArrowRight size={20} className="text-white/50" />
+              </button>
             </div>
           </motion.div>
-        </div>
+        </section>
 
-        {/* Abstract Parallax Background Shapes */}
-        <motion.div 
-          className="absolute top-[20%] left-[10%] w-[40vw] h-[40vw] max-w-[600px] max-h-[600px] rounded-full bg-[#8b5cf6]/5 blur-[120px] -z-10"
-          style={{ y: y1 }}
-        />
-        <motion.div 
-          className="absolute bottom-[10%] right-[10%] w-[30vw] h-[30vw] max-w-[500px] max-h-[500px] rounded-full bg-[#0ea5e9]/5 blur-[100px] -z-10"
-          style={{ y: y2 }}
-        />
-      </section>
+        {/* Features Section */}
+        <section className="py-32 px-4 relative">
+          <div className="container mx-auto">
+            <div className="text-center mb-20">
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">Find Job Opportunities with Ease</h2>
+              <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+                Join CareerConnect and start your journey towards a successful career.
+              </p>
+            </div>
 
-      {/* Guided Flow Section */}
-      <section className="py-24 bg-[#0f172a]/30 relative z-10 border-y border-white/5">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <FeatureCard 
-              icon={Compass} 
-              title="1. Discover" 
-              description="Explore AI-curated career paths tailored to your unique skills and passions."
-              delay={0.1}
-            />
-            <FeatureCard 
-              icon={Target} 
-              title="2. Prepare" 
-              description="Build AI-optimized resumes and practice with mock interviews."
-              delay={0.2}
-            />
-            <FeatureCard 
-              icon={Briefcase} 
-              title="3. Land" 
-              description="Apply to personalized job matches with one click and track your success."
-              delay={0.3}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <FeatureCard
+                icon={LayoutGrid}
+                stat="5000+"
+                title="Job Listings"
+                description="Explore extensive job opportunities matches to your skills and experiences."
+              />
+              <FeatureCard
+                icon={Building2}
+                stat="250+"
+                title="Top Companies"
+                description="Partnered with leading tech companies and startups globally to provide direct access."
+              />
+              <FeatureCard
+                icon={Sparkles}
+                stat="Personalized"
+                title="Matches"
+                description="Earn personalized job recommendations tailored to your profile."
+              />
+              <FeatureCard
+                icon={CheckCircle2}
+                stat="1-Click"
+                title="Applications"
+                description="Find matches to one click apply, streamline your job search, and apply instantly."
+              />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-32 px-4 border-t border-white/5">
+          <div className="container mx-auto text-center">
+            <h2 className="text-4xl md:text-6xl font-bold mb-8">Take Control of Your Career Today</h2>
+            <p className="text-slate-400 text-xl mb-12 max-w-2xl mx-auto">
+              Join CareerConnect and start your journey towards a successful career.
+            </p>
+            <FlatButton className="flex flex-col sm:flex-row items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-none rounded-2xl text-xl font-bold shadow-2xl shadow-blue-500/40 ">
+              Get Started For Free <ArrowRight size={24} />
+            </FlatButton>
+          </div>
+        </section>
+      </div>
     </div>
   );
 };
 
-const FeatureCard = ({ icon: Icon, title, description, delay }) => (
-  <motion.div 
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-100px" }}
-    transition={{ duration: 0.5, delay }}
-    className="p-8 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-colors"
+const FeatureCard = ({ icon: Icon, stat, title, description }) => (
+  <motion.div
+    whileHover={{ y: -5 }}
+    className="p-8 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-all group"
   >
-    <div className="w-12 h-12 rounded-lg bg-[#0ea5e9]/10 flex items-center justify-center text-[#0ea5e9] mb-6">
-      <Icon size={24} />
+    <div className="flex items-start gap-4 mb-6">
+      <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-[#0ea5e9] group-hover:bg-blue-500/20 transition-colors">
+        <Icon size={24} />
+      </div>
+      <div>
+        <div className="text-2xl font-bold text-white leading-none mb-1">{stat}</div>
+        <div className="text-slate-300 font-medium">{title}</div>
+      </div>
     </div>
-    <h3 className="text-xl font-semibold mb-3 text-white">{title}</h3>
-    <p className="text-slate-400 leading-relaxed">{description}</p>
+    <p className="text-slate-400 leading-relaxed text-sm">
+      {description}
+    </p>
   </motion.div>
 );
 

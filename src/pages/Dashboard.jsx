@@ -25,10 +25,10 @@ const Dashboard = () => {
 const OverviewTab = () => (
   <div className="space-y-6">
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <StatCard title="Total Applications" value="24" trend="+3 this week" icon={BriefcaseIcon} color="#0ea5e9" />
-      <StatCard title="Interviews Scheduled" value="2" trend="Upcoming in 2 days" icon={Clock} color="#8b5cf6" />
-      <StatCard title="Profile Views" value="156" trend="+12% vs last week" icon={TrendingUp} color="#10b981" />
-      <StatCard title="Skills Matched" value="85%" trend="Top 10% of applicants" icon={CheckCircle} color="#0ea5e9" />
+      <StatCard title="Total Applications" value="0" trend="-" icon={BriefcaseIcon} color="#0ea5e9" />
+      <StatCard title="Interviews Scheduled" value="0" trend="-" icon={Clock} color="#8b5cf6" />
+      <StatCard title="Profile Views" value="0" trend="-" icon={TrendingUp} color="#10b981" />
+      <StatCard title="Skills Matched" value="0%" trend="-" icon={CheckCircle} color="#0ea5e9" />
     </div>
 
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -36,10 +36,8 @@ const OverviewTab = () => (
         <GlassCard className="h-96 flex flex-col">
           <h3 className="text-lg font-semibold text-white mb-4">Application Success Rate</h3>
           {/* Placeholder for flat graph with borders, no shadow */}
-          <div className="flex-1 border border-white/10 rounded-lg bg-black/20 flex items-end justify-between p-4 gap-2">
-             {[40, 60, 45, 80, 50, 90, 75].map((h, i) => (
-                <div key={i} className="w-full bg-[#0ea5e9]/80 rounded-t-sm" style={{ height: `${h}%` }}></div>
-             ))}
+          <div className="flex-1 border border-white/10 rounded-lg bg-black/20 flex items-center justify-center p-4 gap-2">
+             <span className="text-slate-500 text-sm">No data available yet.</span>
           </div>
         </GlassCard>
       </div>
@@ -47,15 +45,7 @@ const OverviewTab = () => (
         <GlassCard className="h-96">
           <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
           <div className="space-y-4">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="flex items-start gap-3 border-b border-white/5 pb-4 last:border-0">
-                <div className="w-2 h-2 mt-2 rounded-full bg-[#8b5cf6]"></div>
-                <div>
-                  <p className="text-sm text-slate-200">Applied for Frontend Developer at TechCorp</p>
-                  <p className="text-xs text-slate-500">2 days ago</p>
-                </div>
-              </div>
-            ))}
+            <p className="text-sm text-slate-500">No recent activity.</p>
           </div>
         </GlassCard>
       </div>
@@ -68,19 +58,7 @@ const ActivityTab = () => (
     <GlassCard>
       <h3 className="text-lg font-semibold text-white mb-4">This Week</h3>
       <div className="space-y-4">
-        {[
-          { text: "Completed Mock Interview for Frontend role", time: "2 hours ago", color: "bg-[#10b981]" },
-          { text: "Updated resume with React experience", time: "Yesterday", color: "bg-[#0ea5e9]" },
-          { text: "Saved 3 new job postings", time: "2 days ago", color: "bg-[#8b5cf6]" }
-        ].map((item, i) => (
-          <div key={i} className="flex items-start gap-3 border-b border-white/5 pb-4 last:border-0 last:pb-0">
-            <div className={`w-2 h-2 mt-2 rounded-full ${item.color}`}></div>
-            <div>
-              <p className="text-sm text-slate-200">{item.text}</p>
-              <p className="text-xs text-slate-500">{item.time}</p>
-            </div>
-          </div>
-        ))}
+        <p className="text-sm text-slate-500">No activity this week.</p>
       </div>
     </GlassCard>
   </div>
@@ -94,12 +72,7 @@ const AISuggestionsTab = () => (
       </h3>
       <p className="text-sm text-slate-400 mb-4">Based on your recent React and UI/UX activities.</p>
       <div className="space-y-3">
-        {['Senior Frontend Engineer', 'UI Developer', 'Product Designer'].map((role, i) => (
-          <div key={i} className="p-3 rounded-lg border border-white/10 bg-white/5 flex justify-between items-center hover:border-white/20 transition-colors">
-            <span className="text-sm text-slate-200">{role}</span>
-            <button className="text-xs text-[#0ea5e9] hover:underline">View</button>
-          </div>
-        ))}
+        <p className="text-sm text-slate-500">No AI recommendations available yet.</p>
       </div>
     </GlassCard>
     <GlassCard>
@@ -108,24 +81,7 @@ const AISuggestionsTab = () => (
       </h3>
       <p className="text-sm text-slate-400 mb-4">Skills to improve for your target roles.</p>
       <div className="space-y-4">
-        <div>
-          <div className="flex justify-between text-sm mb-1">
-            <span className="text-slate-200">TypeScript</span>
-            <span className="text-[#8b5cf6]">60%</span>
-          </div>
-          <div className="w-full h-2 bg-black/30 rounded-full overflow-hidden">
-            <div className="h-full bg-[#8b5cf6] rounded-full" style={{ width: '60%' }}></div>
-          </div>
-        </div>
-        <div>
-          <div className="flex justify-between text-sm mb-1">
-            <span className="text-slate-200">GraphQL</span>
-            <span className="text-[#0ea5e9]">40%</span>
-          </div>
-          <div className="w-full h-2 bg-black/30 rounded-full overflow-hidden">
-            <div className="h-full bg-[#0ea5e9] rounded-full" style={{ width: '40%' }}></div>
-          </div>
-        </div>
+        <p className="text-sm text-slate-500">Not enough data for skill gap analysis.</p>
       </div>
     </GlassCard>
   </div>
