@@ -1,15 +1,71 @@
-import React from 'react';
-import { Search, MapPin, Building, Clock, Briefcase } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, MapPin, Building, Clock, Briefcase, X } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
 import FlatButton from '../components/ui/FlatButton';
+import { useAuth } from '../context/AuthContext';
 
 const Jobs = () => {
-  const jobs = [
-    { id: 1, title: 'Senior Frontend Engineer', company: 'TechNova', location: 'Remote', type: 'Full-time', salary: '₹120k - ₹150k', tags: ['React', 'TypeScript', 'Tailwind'] },
-    { id: 2, title: 'UX Designer', company: 'CreativePulse', location: 'New York, NY', type: 'Hybrid', salary: '₹90k - ₹110k', tags: ['Figma', 'UI/UX', 'Prototyping'] },
-    { id: 3, title: 'Backend Developer', company: 'DataStream', location: 'San Francisco, CA', type: 'On-site', salary: '₹130k - ₹160k', tags: ['Node.js', 'PostgreSQL', 'AWS'] },
-    { id: 4, title: 'Product Manager', company: 'Visionary', location: 'Remote', type: 'Full-time', salary: '₹110k - ₹140k', tags: ['Agile', 'Strategy', 'Jira'] }
-  ];
+  const { user, token } = useAuth();
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Application Modal State
+  const [showModal, setShowModal] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [resumes, setResumes] = useState([]);
+  const [selectedResumeId, setSelectedResumeId] = useState('');
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/jobs')
+      .then(res => res.json())
+      .then(data => {
+        setJobs(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching jobs:', err);
+        setLoading(false);
+      });
+
+    if (token && user?.role === 'STUDENT') {
+      fetch('http://localhost:5000/api/resumes', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        setResumes(data);
+        if (data.length > 0) setSelectedResumeId(data[0].id);
+      })
+      .catch(console.error);
+    }
+  }, [token, user]);
+
+  const handleApplyClick = (job) => {
+    if (!user) return alert('Please login to apply');
+    if (user.role !== 'STUDENT') return alert('Only students can apply for jobs');
+    setSelectedJob(job);
+    setShowModal(true);
+  };
+
+  const submitApplication = async () => {
+    if (!selectedResumeId) return alert('Please select a resume. Go to the Resume Builder to create one.');
+    try {
+      const res = await fetch('http://localhost:5000/api/applications', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ job_id: selectedJob.id, resume_id: selectedResumeId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      alert('Application submitted successfully!');
+      setShowModal(false);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -43,7 +99,11 @@ const Jobs = () => {
       </GlassCard>
 
       <div className="grid grid-cols-1 gap-6">
-        {jobs.map(job => (
+        {loading ? (
+          <p className="text-white text-center">Loading jobs...</p>
+        ) : jobs.length === 0 ? (
+          <p className="text-white text-center">No jobs found.</p>
+        ) : jobs.map(job => (
           <GlassCard key={job.id} className="hover:border-white/20 transition-all duration-300">
             <div className="flex flex-col md:flex-row justify-between gap-4">
               <div>
@@ -64,7 +124,7 @@ const Jobs = () => {
               </div>
               <div className="flex flex-col justify-center items-end gap-3">
                 <span className="text-xs text-slate-500">Posted 2 days ago</span>
-                <FlatButton variant="primary" className="bg-white/10 hover:bg-white/20 text-white w-full md:w-auto">
+                <FlatButton onClick={() => handleApplyClick(job)} variant="primary" className="bg-white/10 hover:bg-white/20 text-white w-full md:w-auto">
                   Apply Now
                 </FlatButton>
               </div>
@@ -72,6 +132,51 @@ const Jobs = () => {
           </GlassCard>
         ))}
       </div>
+
+      {showModal && selectedJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <GlassCard className="w-full max-w-lg p-6 relative">
+            <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+              <X size={20} />
+            </button>
+            <h2 className="text-2xl font-bold text-white mb-2">Apply for {selectedJob.title}</h2>
+            <p className="text-slate-400 mb-6">{selectedJob.company}</p>
+            
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-slate-300 mb-2">Select Resume to Apply With</label>
+              {resumes.length > 0 ? (
+                <select 
+                  value={selectedResumeId}
+                  onChange={(e) => setSelectedResumeId(e.target.value)}
+                  className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-[#0ea5e9] transition-colors appearance-none"
+                >
+                  {resumes.map(r => (
+                    <option key={r.id} value={r.id} className="bg-[#0f172a]">{r.title}</option>
+                  ))}
+                </select>
+              ) : (
+                <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                  You don't have any resumes uploaded. Please go to the Resume Builder to upload one.
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <FlatButton onClick={() => setShowModal(false)} variant="outline" className="border-white/10 text-slate-300 hover:text-white">
+                Cancel
+              </FlatButton>
+              <FlatButton 
+                onClick={submitApplication} 
+                variant="primary" 
+                disabled={resumes.length === 0}
+                className="bg-[#0ea5e9] hover:bg-[#0284c7] text-white disabled:opacity-50"
+              >
+                Submit Application
+              </FlatButton>
+            </div>
+          </GlassCard>
+        </div>
+      )}
     </div>
   );
 };

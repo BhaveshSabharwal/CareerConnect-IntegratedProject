@@ -2,9 +2,12 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Layout from './components/layout/Layout';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import InterviewerDashboard from './pages/InterviewerDashboard';
 import Explorer from './pages/Explorer';
 import Jobs from './pages/Jobs';
 import Resume from './pages/Resume';
+import Auth from './pages/Auth';
 import { useAuth } from './context/AuthContext';
 
 function App() {
@@ -20,11 +23,17 @@ function App() {
           />
           <Route 
             path="dashboard" 
-            element={<Dashboard />} 
+            element={
+              !user ? <Navigate to="/" replace /> :
+              user.role === 'ADMIN' ? <AdminDashboard /> :
+              user.role === 'INTERVIEWER' ? <InterviewerDashboard /> :
+              <Dashboard />
+            } 
           />
-          <Route path="explorer" element={<Explorer />} />
-          <Route path="jobs" element={<Jobs />} />
-          <Route path="resume" element={<Resume />} />
+          <Route path="explorer" element={user ? <Explorer /> : <Navigate to="/" replace />} />
+          <Route path="jobs" element={user ? <Jobs /> : <Navigate to="/" replace />} />
+          <Route path="resume" element={user ? <Resume /> : <Navigate to="/" replace />} />
+          <Route path="auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

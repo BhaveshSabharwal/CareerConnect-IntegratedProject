@@ -6,29 +6,34 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check local storage for user on mount
-    const storedUser = localStorage.getItem('careerConnectUser');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const storedData = localStorage.getItem('careerConnectAuth');
+    if (storedData) {
+      const { user: storedUser, token: storedToken } = JSON.parse(storedData);
+      setUser(storedUser);
+      setToken(storedToken);
     }
     setLoading(false);
   }, []);
 
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem('careerConnectUser', JSON.stringify(userData));
+  const login = (data) => {
+    setUser(data.user);
+    setToken(data.token);
+    localStorage.setItem('careerConnectAuth', JSON.stringify(data));
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('careerConnectUser');
+    setToken(null);
+    localStorage.removeItem('careerConnectAuth');
   };
 
   const value = {
     user,
+    token,
     login,
     logout,
     loading

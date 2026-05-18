@@ -1,9 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles, Briefcase, Building2, MousePointer2, Zap, LayoutGrid, CheckCircle2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import FlatButton from '../components/ui/FlatButton';
 
 const Home = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="w-full bg-[#020617] text-white overflow-hidden">
       {/* Background Effects */}
@@ -43,10 +46,10 @@ const Home = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-              <FlatButton className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white border-none rounded-xl text-lg shadow-xl shadow-blue-500/25">
+              <FlatButton onClick={() => navigate('/auth')} className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white border-none rounded-xl text-lg shadow-xl shadow-blue-500/25">
                 Start Your Journey <ArrowRight size={20} />
               </FlatButton>
-              <button className="px-8 py-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all text-lg font-medium text-white flex items-center gap-2">
+              <button onClick={() => navigate('/explorer')} className="px-8 py-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all text-lg font-medium text-white flex items-center gap-2">
                 Explore Careers <ArrowRight size={20} className="text-white/50" />
               </button>
             </div>
@@ -99,7 +102,7 @@ const Home = () => {
             <p className="text-slate-400 text-xl mb-12 max-w-2xl mx-auto">
               Join CareerConnect and start your journey towards a successful career.
             </p>
-            <FlatButton className="flex flex-col sm:flex-row items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-none rounded-2xl text-xl font-bold shadow-2xl shadow-blue-500/40 ">
+            <FlatButton onClick={() => navigate('/auth')} className="flex flex-col sm:flex-row items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-none rounded-2xl text-xl font-bold shadow-2xl shadow-blue-500/40 ">
               Get Started For Free <ArrowRight size={24} />
             </FlatButton>
           </div>
