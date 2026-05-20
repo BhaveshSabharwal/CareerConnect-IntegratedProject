@@ -27,4 +27,4 @@ dist-ssr
 *.sw?
 
 #Extras
-Carrer-Connect-reference
+test*

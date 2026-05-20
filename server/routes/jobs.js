@@ -40,7 +40,7 @@ router.get('/all', verifyToken, async (req, res) => {
 // POST a new job (Interviewer)
 router.post('/', verifyToken, isInterviewer, async (req, res) => {
   try {
-    const { title, company, location, type, salary, tags } = req.body;
+    const { title, company, location, type, salary, tags, description, jd_url } = req.body;
     const job = await Job.create({
       title,
       company, // Can also derive from req.user if company_name is stored there
@@ -49,7 +49,9 @@ router.post('/', verifyToken, isInterviewer, async (req, res) => {
       salary,
       tags: tags || [],
       interviewer_id: req.user.id,
-      status: 'pending_approval' // Needs Admin approval
+      status: 'pending_approval', // Needs Admin approval
+      description: description || '',
+      jd_url: jd_url || ''
     });
     res.status(201).json(job);
   } catch (error) {

@@ -1,67 +1,149 @@
-import React from 'react';
-import { Compass, BookOpen, Users, Star, Award } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Compass, BookOpen, Star, Award, ExternalLink, Activity } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
+import { useAuth } from '../context/AuthContext';
 
 const Explorer = () => {
-  const learningPaths = [
-    { title: 'Frontend Mastery', courses: 12, users: '1.2k', rating: 4.8, color: '#0ea5e9' },
-    { title: 'Backend Fundamentals', courses: 8, users: '850', rating: 4.6, color: '#10b981' },
-    { title: 'UI/UX Design', courses: 5, users: '640', rating: 4.9, color: '#8b5cf6' }
-  ];
+  const { token } = useAuth();
+  const [guidance, setGuidance] = useState([]);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (token) {
+      // 1. Fetch career guidance articles
+      fetch('http://localhost:5000/api/resources?type=career_guidance', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => setGuidance(data))
+      .catch(console.error);
+
+      // 2. Fetch jobs to analyze tags
+      fetch('http://localhost:5000/api/jobs', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        setJobs(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+    }
+  }, [token]);
+
+  // Analyze trending skills from active jobs tags frequency
+  const tagFreq = {};
+  jobs.forEach(j => {
+    if (j.tags) {
+      j.tags.forEach(t => {
+        const clean = t.trim();
+        if (clean) {
+          tagFreq[clean] = (tagFreq[clean] || 0) + 1;
+        }
+      });
+    }
+  });
+
+  const trendingSkills = Object.entries(tagFreq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6);
+
+  const colors = ['#0ea5e9', '#10b981', '#8b5cf6', '#a855f7', '#f43f5e', '#eab308'];
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-2"><Compass className="text-[#8b5cf6]" /> Explore</h1>
-        <p className="text-slate-400">Discover new career paths, companies, and learning resources.</p>
+        <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-2">
+          <Compass className="text-[#8b5cf6]" /> Career Explore
+        </h1>
+        <p className="text-slate-400">Discover new career articles, learning guidance paths, and live industry trending tags.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Dynamic Career Guidance articles column */}
         <div className="lg:col-span-2 space-y-6">
-          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-            <BookOpen className="text-[#0ea5e9]" size={20} /> Top Learning Paths
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <BookOpen className="text-[#0ea5e9]" size={18} /> Dynamic Learning Paths & Guides
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {learningPaths.map((path, index) => (
-              <GlassCard key={index} className="relative overflow-hidden group hover:-translate-y-1 transition-transform">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <Award size={64} color={path.color} />
-                </div>
-                <h3 className="text-lg font-bold text-white mb-4">{path.title}</h3>
-                <div className="flex items-center gap-4 text-sm text-slate-400">
-                  <span className="flex items-center gap-1"><BookOpen size={14} /> {path.courses} Courses</span>
-                  <span className="flex items-center gap-1"><Users size={14} /> {path.users}</span>
-                  <span className="flex items-center gap-1 text-yellow-500"><Star size={14} className="fill-current" /> {path.rating}</span>
-                </div>
-              </GlassCard>
-            ))}
-          </div>
+          
+          {loading ? (
+            <p className="text-slate-400 text-xs italic">Loading Explore feeds...</p>
+          ) : guidance.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {guidance.map((path, index) => {
+                const accentColor = colors[index % colors.length];
+                return (
+                  <GlassCard key={path.id} className="relative overflow-hidden group hover:-translate-y-1 transition-transform border border-white/5">
+                    <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <Award size={54} color={accentColor} />
+                    </div>
+                    <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-1.5 truncate">
+                      <span style={{ backgroundColor: accentColor }} className="w-2 h-2 rounded-full inline-block"></span>
+                      {path.title}
+                    </h3>
+                    <p className="text-xs text-slate-400 line-clamp-4 leading-relaxed mb-4">{path.content}</p>
+                    <div className="text-[10px] text-slate-500 font-mono flex items-center gap-1 mt-auto">
+                      <span>Publisher: Admin •</span>
+                      <span>Scanned {new Date(path.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </GlassCard>
+                );
+              })}
+            </div>
+          ) : (
+            <GlassCard className="py-12 border border-dashed border-white/10 text-center text-slate-500 text-xs italic">
+              No learning guides posted yet. Ask your Admins to publish preparation content!
+            </GlassCard>
+          )}
 
-          <h2 className="text-xl font-semibold text-white flex items-center gap-2 mt-8">
-            <Star className="text-yellow-500" size={20} /> Featured Companies
+          <h2 className="text-lg font-bold text-white flex items-center gap-2 mt-8">
+            <Star className="text-yellow-500" size={18} /> Featured Campus Recruiters
           </h2>
-          <GlassCard>
-            <div className="text-center py-8">
-              <p className="text-slate-400">Company discovery feed coming soon.</p>
+          <GlassCard className="relative overflow-hidden">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h4 className="text-sm font-bold text-white">Interactive Partner Discovery Feed</h4>
+                <p className="text-xs text-slate-400 mt-1">Campus recruiting partners are automatically catalogued here during active hiring campaigns.</p>
+              </div>
+              <span className="text-[9px] px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 font-mono">STANDBY MODE</span>
             </div>
           </GlassCard>
         </div>
 
+        {/* Live Trending Tags sidebar */}
         <div>
-          <GlassCard className="sticky top-24">
-            <h3 className="text-lg font-semibold text-white mb-4">Trending Skills</h3>
+          <GlassCard className="sticky top-24 border-l-2 border-[#8b5cf6]">
+            <h3 className="font-bold text-white mb-2 flex items-center gap-2">
+              <Activity size={16} className="text-[#8b5cf6]" /> Live Job Skill Trends
+            </h3>
+            <p className="text-[10px] text-slate-400 mb-4">Calculated from total tag occurrence counts in approved database job postings.</p>
+
             <div className="space-y-4">
-              {['React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Figma'].map((skill, i) => (
-                <div key={skill} className="flex items-center justify-between">
-                  <span className="text-slate-300">{skill}</span>
-                  <div className="w-24 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-[#0ea5e9] to-[#8b5cf6]" 
-                      style={{ width: `${85 - i * 5}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+              {trendingSkills.length > 0 ? (
+                trendingSkills.map(([skill, count], i) => {
+                  const percent = Math.min(100, Math.max(25, (count / jobs.length) * 100));
+                  return (
+                    <div key={skill} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-300 font-medium">{skill}</span>
+                        <span className="text-slate-500 font-mono text-[10px]">{count} Active Postings ({Math.round(percent)}%)</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                        <div 
+                          className="h-full bg-gradient-to-r from-[#0ea5e9] to-[#8b5cf6] rounded-full" 
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-slate-500 text-xs italic py-6 text-center">No active job listings to compute market demand tags.</p>
+              )}
             </div>
           </GlassCard>
         </div>

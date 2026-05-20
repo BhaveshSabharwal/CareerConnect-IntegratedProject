@@ -40,6 +40,14 @@ const Job = sequelize.define('Job', {
     type: DataTypes.ENUM('pending_approval', 'active', 'closed', 'rejected'),
     defaultValue: 'pending_approval',
   },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  jd_url: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
 }, {
   tableName: 'jobs',
   timestamps: true,

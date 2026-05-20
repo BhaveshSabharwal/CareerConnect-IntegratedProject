@@ -1,19 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Briefcase, LayoutDashboard, Compass, FileText, MessageSquare, User, Menu, Users, Bell } from 'lucide-react';
 import FlatButton from '../ui/FlatButton';
 import { useAuth } from '../../context/AuthContext';
 
 const Topbar = () => {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
 
-  // Mock notifications for now
-  const notifications = [
-    { id: 1, title: 'Application Shortlisted', message: 'You have been shortlisted for the SWE role at Google!', is_read: false },
-    { id: 2, title: 'Interview Scheduled', message: 'Your interview for Backend Engineer is on Monday.', is_read: true },
-  ];
+  const fetchNotifications = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('http://localhost:5000/api/notifications', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data);
+      }
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (token && user) {
+      fetchNotifications();
+      // Poll every 10 seconds to keep in sync
+      const interval = setInterval(fetchNotifications, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [token, user]);
+
+  const markAllAsRead = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('http://localhost:5000/api/notifications/read-all', {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      }
+    } catch (err) {
+      console.error('Error marking all notifications as read:', err);
+    }
+  };
+
+  const markAsRead = async (id) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/notifications/${id}/read`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+      }
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   const getNavItems = () => {
     if (!user) return [];
@@ -73,19 +124,31 @@ const Topbar = () => {
                 className="relative p-2 text-slate-300 hover:text-white transition-colors rounded-full hover:bg-white/5"
               >
                 <Bell size={20} />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                )}
               </button>
               
               {showNotifications && (
                 <div className="absolute top-full right-0 mt-2 w-80 bg-[#0f172a] border border-white/10 rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-50">
                   <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
-                    <h3 className="font-semibold text-white">Notifications</h3>
-                    <button className="text-xs text-[#0ea5e9] hover:underline">Mark all as read</button>
+                    <h3 className="font-semibold text-white text-sm">Notifications ({unreadCount})</h3>
+                    {unreadCount > 0 && (
+                      <button onClick={markAllAsRead} className="text-xs text-[#0ea5e9] hover:underline">Mark all as read</button>
+                    )}
                   </div>
                   <div className="max-h-80 overflow-y-auto p-2">
                     {notifications.length > 0 ? (
                       notifications.map(notif => (
-                        <div key={notif.id} className={`p-3 rounded-lg mb-1 ${notif.is_read ? 'opacity-70' : 'bg-white/5'}`}>
+                        <div 
+                          key={notif.id} 
+                          onClick={() => !notif.is_read && markAsRead(notif.id)}
+                          className={`p-3 rounded-lg mb-1 transition-all cursor-pointer ${
+                            notif.is_read 
+                              ? 'opacity-50 hover:opacity-75 bg-slate-900/50' 
+                              : 'bg-white/5 hover:bg-white/10 border-l-2 border-[#0ea5e9]'
+                          }`}
+                        >
                           <h4 className="text-sm font-medium text-white">{notif.title}</h4>
                           <p className="text-xs text-slate-400 mt-1">{notif.message}</p>
                         </div>

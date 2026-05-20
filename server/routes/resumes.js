@@ -16,21 +16,80 @@ router.get('/', verifyToken, isStudent, async (req, res) => {
   }
 });
 
+// Helper to perform resume parsing & technical feedback matching
+const analyzeResume = (content, title) => {
+  const text = ((content || '') + ' ' + (title || '')).toLowerCase();
+  const techKeywords = {
+    react: 'React.js component-based framework',
+    javascript: 'JavaScript standard language',
+    typescript: 'TypeScript static typing schemas',
+    html: 'HTML5 semantic tags structuring',
+    css: 'CSS3 custom stylesheet structures',
+    tailwind: 'Tailwind CSS utility alignment style',
+    node: 'Node.js backend environment runtime',
+    express: 'Express server router patterns',
+    python: 'Python programming syntax',
+    sql: 'SQL database relations query skills',
+    postgres: 'PostgreSQL database persistence',
+    mongodb: 'MongoDB NoSQL collections',
+    aws: 'Amazon Web Services cloud resources',
+    docker: 'Docker microservices packaging container',
+    git: 'Git workflow repository branches',
+    figma: 'Figma layouts interactive designer prototyping'
+  };
+
+  const matched = [];
+  const missing = [];
+  
+  for (const [key, label] of Object.entries(techKeywords)) {
+    if (text.includes(key)) {
+      matched.push(label);
+    } else {
+      missing.push(label);
+    }
+  }
+
+  // Calculate score based on keyword coverage + structure
+  let score = 55; // base score
+  score += matched.length * 3; // up to 16 * 3 = 48
+  
+  // Word count check
+  const wordCount = text.split(/\s+/).filter(w => w).length;
+  if (wordCount > 30) score += 8;
+  else if (wordCount > 10) score += 4;
+  
+  // Cap at 99, floor at 60
+  score = Math.min(99, Math.max(60, score));
+
+  // Generate detailed structured feedback
+  const feedbackData = {
+    strengths: matched.slice(0, 5),
+    improvements: missing.slice(0, 4),
+    formatting: wordCount < 20 ? 'Document body is too sparse. Please add more educational details and work history.' : 'Good page presentation layout structure and readability.',
+    technicalGaps: missing.map(m => m.split(' ')[0]).slice(0, 5)
+  };
+
+  return {
+    score,
+    feedback: JSON.stringify(feedbackData)
+  };
+};
+
 // POST add a new resume
 router.post('/', verifyToken, isStudent, async (req, res) => {
   try {
-    const { title, file_url, parsed_content, ai_score, ai_feedback } = req.body;
+    const { title, file_url, parsed_content } = req.body;
     
-    // In a real app, file upload middleware (like multer) would handle file_url
-    // and AI parsing would generate parsed_content and ai_score here.
+    // Analyze resume content to get real score and feedback rather than random numbers
+    const analysis = analyzeResume(parsed_content, title);
     
     const resume = await Resume.create({
       user_id: req.user.id,
       title: title || 'My Resume',
-      file_url,
-      parsed_content,
-      ai_score,
-      ai_feedback
+      file_url: file_url || 'https://example.com/resume.pdf',
+      parsed_content: parsed_content || '',
+      ai_score: analysis.score,
+      ai_feedback: analysis.feedback
     });
     
     res.status(201).json(resume);
