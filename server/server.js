@@ -59,7 +59,7 @@ app.get('/api/users', async (req, res) => {
             attributes: ['id', 'name', 'email', 'role', 'status', 'is_active', 'created_at'],
             include: [{
                 model: Profile,
-                attributes: ['graduation_year', 'major']
+                attributes: ['graduation_year', 'university', 'course']
             }]
         });
         res.json(users);
@@ -139,6 +139,77 @@ app.post('/api/auth/login', async (req, res) => {
 
     const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET || 'secret123', { expiresIn: '1d' });
     res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Forgot Password (OTP)
+const { sendEmail } = require('./utils/email');
+const redisClient = require('./utils/redisClient');
+
+app.post('/api/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      // Return 200 even if not found to prevent email enumeration
+      return res.json({ message: 'If an account with that email exists, we have sent a password reset OTP.' });
+    }
+    
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store in Redis (expires in 300s = 5m)
+    await redisClient.setEx(`otp:${email}`, 300, otp);
+    
+    // Send email
+    const html = `
+      <div style="font-family: sans-serif; padding: 20px; background: #020617; color: #fff; max-width: 600px; border-radius: 10px;">
+        <h2 style="color: #0ea5e9;">Career Connect Password Reset</h2>
+        <p>You requested a password reset. Here is your verification code:</p>
+        <div style="font-size: 24px; font-weight: bold; padding: 15px; background: #8b5cf6; color: white; display: inline-block; border-radius: 6px; letter-spacing: 2px;">
+          ${otp}
+        </div>
+        <p style="margin-top: 20px; font-size: 12px; color: #94a3b8;">This code will expire in 5 minutes.</p>
+        <p style="font-size: 12px; color: #94a3b8;">If you did not request this, please ignore this email.</p>
+      </div>
+    `;
+    await sendEmail({ to: email, subject: 'Your Password Reset OTP', html });
+    
+    res.json({ message: 'If an account with that email exists, we have sent a password reset OTP.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reset Password
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ error: 'Email, OTP, and new password are required.' });
+    }
+    
+    const storedOtp = await redisClient.get(`otp:${email}`);
+    
+    if (!storedOtp) {
+      return res.status(400).json({ error: 'OTP has expired or is invalid. Please request a new one.' });
+    }
+    
+    if (storedOtp !== otp) {
+      return res.status(400).json({ error: 'Incorrect OTP.' });
+    }
+    
+    // OTP matches. Update password.
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await User.update({ password_hash: hashedPassword }, { where: { email } });
+    
+    // Delete OTP from redis
+    await redisClient.del(`otp:${email}`);
+    
+    res.json({ success: true, message: 'Password has been reset successfully. You can now login.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

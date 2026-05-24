@@ -230,41 +230,25 @@ router.post('/:id/evaluate', verifyToken, isInterviewer, async (req, res) => {
     if (!application) return res.status(404).json({ error: 'Application not found' });
     if (application.Job.interviewer_id !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
 
-    // Simple ATS Engine
-    const resumeText = (application.Resume.parsed_content || '').toLowerCase();
-    const jdText = ((application.Job.description || '') + ' ' + (application.Job.tags || []).join(' ')).toLowerCase();
-
-    // Extract basic alphanumeric words from JD as keywords (simple mock ATS)
-    const jdWords = Array.from(new Set(jdText.match(/[a-zA-Z]{4,}/g) || []));
+    // Use advanced ATS Engine
+    const { calculateATSScore } = require('../utils/atsEngine');
     
-    let matchCount = 0;
-    const matchedKeywords = [];
-    const missingKeywords = [];
+    const resumeText = application.Resume.parsed_content || '';
+    const jdText = application.Job.description || '';
+    const jobTags = application.Job.tags || [];
 
-    jdWords.forEach(word => {
-      // Avoid common stop words
-      if (['this', 'that', 'with', 'from', 'have', 'your', 'will', 'must', 'skills', 'experience', 'years'].includes(word)) return;
-      if (resumeText.includes(word)) {
-        matchCount++;
-        matchedKeywords.push(word);
-      } else {
-        missingKeywords.push(word);
-      }
-    });
+    const { score, matchedKeywords, missingKeywords } = calculateATSScore(resumeText, jdText, jobTags);
 
-    const totalValidKeywords = matchedKeywords.length + missingKeywords.length;
-    let score = totalValidKeywords === 0 ? 0 : Math.round((matchCount / totalValidKeywords) * 100);
-
-    // Save score to resume
+    // Save score and feedback to Resume
     application.Resume.ai_score = score;
     application.Resume.ai_feedback = JSON.stringify({
       strengths: matchedKeywords.slice(0, 5),
       improvements: missingKeywords.slice(0, 5),
-      formatting: 'ATS engine completed keyword matching against Job Description.',
+      formatting: 'ATS engine completed advanced keyword matching against Job Description and Tags.',
       technicalGaps: missingKeywords.slice(0, 5)
     });
     await application.Resume.save();
-
+    
     res.json({ score, feedback: application.Resume.ai_feedback });
   } catch (error) {
     res.status(500).json({ error: error.message });

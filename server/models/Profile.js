@@ -23,7 +23,11 @@ const Profile = sequelize.define('Profile', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
-  major: {
+  university: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  course: {
     type: DataTypes.STRING,
     allowNull: true,
   },

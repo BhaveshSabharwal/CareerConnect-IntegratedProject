@@ -18,7 +18,8 @@ router.get('/', verifyToken, async (req, res) => {
         user_id: userId,
         skills: [],
         bio: '',
-        major: '',
+        university: '',
+        course: '',
         graduation_year: new Date().getFullYear(),
         academic_marks: '',
         projects: [],
@@ -41,7 +42,7 @@ router.get('/', verifyToken, async (req, res) => {
 router.put('/', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { bio, major, graduation_year, skills, academic_marks, name, projects, experience } = req.body;
+    const { bio, university, course, graduation_year, skills, academic_marks, name, projects, experience } = req.body;
 
     let profile = await Profile.findOne({ where: { user_id: userId } });
 
@@ -49,7 +50,8 @@ router.put('/', verifyToken, async (req, res) => {
       profile = await Profile.create({
         user_id: userId,
         bio,
-        major,
+        university,
+        course,
         graduation_year,
         skills: skills || [],
         academic_marks,
@@ -58,7 +60,8 @@ router.put('/', verifyToken, async (req, res) => {
       });
     } else {
       profile.bio = bio !== undefined ? bio : profile.bio;
-      profile.major = major !== undefined ? major : profile.major;
+      profile.university = university !== undefined ? university : profile.university;
+      profile.course = course !== undefined ? course : profile.course;
       profile.graduation_year = graduation_year !== undefined ? graduation_year : profile.graduation_year;
       profile.skills = skills !== undefined ? skills : profile.skills;
       profile.academic_marks = academic_marks !== undefined ? academic_marks : profile.academic_marks;
