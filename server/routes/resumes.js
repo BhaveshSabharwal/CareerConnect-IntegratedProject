@@ -4,6 +4,11 @@ const { verifyToken, isStudent } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+
+// Vercel Serverless Polyfill for pdf-parse
+if (typeof DOMMatrix === 'undefined') {
+  global.DOMMatrix = class DOMMatrix {};
+}
 const pdfParse = require('pdf-parse');
 
 const storage = multer.diskStorage({
