@@ -13,7 +13,7 @@ const InterviewerDashboard = () => {
 
   const fetchJobs = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/jobs/all', {
+      const res = await fetch('/api/jobs/all', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -73,7 +73,7 @@ const JobsListTab = ({ token }) => {
 
   const fetchJobs = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/jobs/all', {
+      const res = await fetch('/api/jobs/all', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) setJobs(await res.json());
@@ -90,7 +90,7 @@ const JobsListTab = ({ token }) => {
   const handleViewApplicants = async (jobId) => {
     setSelectedJobId(jobId);
     try {
-      const res = await fetch(`http://localhost:5000/api/applications/job/${jobId}`, {
+      const res = await fetch(`/api/applications/job/${jobId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) setApplicants(await res.json());
@@ -102,7 +102,7 @@ const JobsListTab = ({ token }) => {
 
   const handleUpdateStatus = async (appId, status, additionalData = {}) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/applications/${appId}/status`, {
+      const res = await fetch(`/api/applications/${appId}/status`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -145,7 +145,7 @@ const JobsListTab = ({ token }) => {
 
   const handleEvaluateATS = async (appId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/applications/${appId}/evaluate`, {
+      const res = await fetch(`/api/applications/${appId}/evaluate`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -319,7 +319,7 @@ const JobsListTab = ({ token }) => {
                 <h4 className="text-xs font-bold text-[#0ea5e9] uppercase tracking-wider mb-2 flex items-center gap-2">
                   <span>Resume Source Content</span>
                   {viewingResume.file_url && viewingResume.file_url !== 'https://example.com/resume.pdf' && (
-                    <a href={`http://localhost:5000${viewingResume.file_url}`} target="_blank" rel="noopener noreferrer" className="text-[#10b981] hover:underline normal-case">
+                    <a href={`${viewingResume.file_url}`} target="_blank" rel="noopener noreferrer" className="text-[#10b981] hover:underline normal-case">
                       (Download PDF)
                     </a>
                   )}
@@ -328,7 +328,7 @@ const JobsListTab = ({ token }) => {
                 {viewingResume.file_url && viewingResume.file_url.endsWith('.pdf') ? (
                   <div className="bg-black/30 border border-white/5 rounded-lg overflow-hidden h-96">
                     <iframe 
-                      src={`http://localhost:5000${viewingResume.file_url}`} 
+                      src={`${viewingResume.file_url}`} 
                       className="w-full h-full"
                       title="Resume PDF Viewer"
                     />
@@ -485,7 +485,7 @@ const PostJobTab = ({ token, onJobPosted }) => {
         body.append('file', selectedJdFile);
       }
 
-      const res = await fetch('http://localhost:5000/api/jobs', {
+      const res = await fetch('/api/jobs', {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${token}`

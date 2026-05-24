@@ -14,7 +14,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (token && user?.role === 'STUDENT') {
       // 1. Fetch applications
-      fetch('http://localhost:5000/api/applications/me', {
+      fetch('/api/applications/me', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -22,7 +22,7 @@ const Dashboard = () => {
       .catch(console.error);
 
       // 2. Fetch profile skills
-      fetch('http://localhost:5000/api/profile', {
+      fetch('/api/profile', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -30,7 +30,7 @@ const Dashboard = () => {
       .catch(console.error);
 
       // 3. Fetch active jobs
-      fetch('http://localhost:5000/api/jobs', {
+      fetch('/api/jobs', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -38,7 +38,7 @@ const Dashboard = () => {
       .catch(console.error);
 
       // 4. Fetch learning/interview guides
-      fetch('http://localhost:5000/api/resources?type=interview_prep', {
+      fetch('/api/resources?type=interview_prep', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -257,7 +257,7 @@ const AISuggestionsTab = ({ skills, activeJobs, guides }) => {
                   <p className="text-[10px] text-slate-400 line-clamp-2 mt-1">{guide.content}</p>
                 </div>
                 {guide.file_url && (
-                  <a href={`http://localhost:5000${guide.file_url}`} target="_blank" rel="noopener noreferrer" className="mt-2 text-[10px] text-[#10b981] font-bold hover:underline self-start">
+                  <a href={`${guide.file_url}`} target="_blank" rel="noopener noreferrer" className="mt-2 text-[10px] text-[#10b981] font-bold hover:underline self-start">
                     Download Attached File
                   </a>
                 )}

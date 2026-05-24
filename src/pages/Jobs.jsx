@@ -21,7 +21,7 @@ const Jobs = () => {
   const [selectedResumeId, setSelectedResumeId] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/jobs')
+    fetch('/api/jobs')
       .then(res => res.json())
       .then(data => {
         setJobs(data);
@@ -33,7 +33,7 @@ const Jobs = () => {
       });
 
     if (token && user?.role === 'STUDENT') {
-      fetch('http://localhost:5000/api/resumes', {
+      fetch('/api/resumes', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -55,7 +55,7 @@ const Jobs = () => {
   const submitApplication = async () => {
     if (!selectedResumeId) return alert('Please select a resume. Go to the Resume Builder to create one.');
     try {
-      const res = await fetch('http://localhost:5000/api/applications', {
+      const res = await fetch('/api/applications', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

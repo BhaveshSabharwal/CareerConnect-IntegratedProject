@@ -12,7 +12,7 @@ const Explorer = () => {
   useEffect(() => {
     if (token) {
       // 1. Fetch career guidance articles
-      fetch('http://localhost:5000/api/resources?type=career_guidance', {
+      fetch('/api/resources?type=career_guidance', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -20,7 +20,7 @@ const Explorer = () => {
       .catch(console.error);
 
       // 2. Fetch jobs to analyze tags
-      fetch('http://localhost:5000/api/jobs', {
+      fetch('/api/jobs', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -102,7 +102,7 @@ const Explorer = () => {
                     </div>
                     
                     {path.file_url && (
-                      <a href={`http://localhost:5000${path.file_url}`} target="_blank" rel="noopener noreferrer" className="mb-4 text-[10px] text-[#0ea5e9] font-bold hover:underline self-start flex items-center gap-1">
+                      <a href={`${path.file_url}`} target="_blank" rel="noopener noreferrer" className="mb-4 text-[10px] text-[#0ea5e9] font-bold hover:underline self-start flex items-center gap-1">
                         <ExternalLink size={10} /> Download Associated Material
                       </a>
                     )}

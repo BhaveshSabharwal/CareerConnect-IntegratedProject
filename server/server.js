@@ -278,8 +278,12 @@ app.use('/api/profile', profileRouter);
 app.use('/api/resources', resourcesRouter);
 app.use('/api/admin', adminRouter);
 
-sequelize.sync({ alter: true }).then(() => {
-  app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-  });
+sequelize.sync().then(() => {
+  if (process.env.NODE_ENV !== 'production') {
+    app.listen(port, () => {
+      console.log(`Server running on port ${port}`);
+    });
+  }
 });
+
+module.exports = app;

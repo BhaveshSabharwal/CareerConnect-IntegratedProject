@@ -49,7 +49,7 @@ const Resume = () => {
   // Fetch student profile on mount
   const fetchProfile = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/profile', {
+      const res = await fetch('/api/profile', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -76,7 +76,7 @@ const Resume = () => {
 
   const fetchResumes = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/resumes', {
+      const res = await fetch('/api/resumes', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -100,7 +100,7 @@ const Resume = () => {
 
   const handleSaveProfile = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/profile', {
+      const res = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -130,7 +130,7 @@ const Resume = () => {
   const syncSkills = async (updatedSkills) => {
     setSkills(updatedSkills);
     try {
-      await fetch('http://localhost:5000/api/profile', {
+      await fetch('/api/profile', {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -161,7 +161,7 @@ const Resume = () => {
         formData.append('file_url', 'https://example.com/resume.pdf');
       }
 
-      const res = await fetch('http://localhost:5000/api/resumes', {
+      const res = await fetch('/api/resumes', {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${token}` 
@@ -189,7 +189,7 @@ const Resume = () => {
     e.stopPropagation();
     if (!window.confirm('Are you sure you want to delete this resume?')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/resumes/${id}`, {
+      const res = await fetch(`/api/resumes/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -669,7 +669,7 @@ const Resume = () => {
                   <div className="text-right">
                     <span className="text-[10px] text-slate-500 block mb-1">Last scanned: {new Date(selectedResume.created_at).toLocaleDateString()}</span>
                     {selectedResume.file_url && selectedResume.file_url !== 'https://example.com/resume.pdf' && (
-                      <a href={`http://localhost:5000${selectedResume.file_url}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#0ea5e9] hover:underline font-bold">
+                      <a href={`${selectedResume.file_url}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#0ea5e9] hover:underline font-bold">
                         Download PDF Resume
                       </a>
                     )}

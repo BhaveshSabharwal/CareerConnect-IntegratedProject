@@ -13,12 +13,12 @@ const AdminDashboard = () => {
   
   const fetchData = async () => {
     try {
-      const jobsRes = await fetch('http://localhost:5000/api/jobs/all', {
+      const jobsRes = await fetch('/api/jobs/all', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (jobsRes.ok) setJobs(await jobsRes.json());
       
-      const usersRes = await fetch('http://localhost:5000/api/users', {
+      const usersRes = await fetch('/api/users', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (usersRes.ok) setUsers(await usersRes.json());
@@ -73,7 +73,7 @@ const JobApprovalsTab = ({ jobs, token, onRefresh }) => {
   
   const handleUpdateStatus = async (jobId, status) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/jobs/${jobId}/status`, {
+      const res = await fetch(`/api/jobs/${jobId}/status`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -143,7 +143,7 @@ const UserModerationTab = ({ users, token, onRefresh }) => {
     const newStatus = currentStatus === 'active' ? 'blocked' : 'active';
     showConfirm(`Are you sure you want to change user status to: ${newStatus}?`, async () => {
         try {
-          const res = await fetch(`http://localhost:5000/api/users/${userId}/status`, {
+          const res = await fetch(`/api/users/${userId}/status`, {
             method: 'PUT',
             headers: { 
               'Content-Type': 'application/json',
@@ -165,7 +165,7 @@ const UserModerationTab = ({ users, token, onRefresh }) => {
     
     showConfirm(`Change status to '${newStatus}' for ${selectedUserIds.length} users?`, async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/users/bulk/status', {
+        const res = await fetch('/api/users/bulk/status', {
           method: 'PUT',
           headers: { 
             'Content-Type': 'application/json',
@@ -494,7 +494,7 @@ const ResourcesManagementTab = ({ token }) => {
 
   const fetchResources = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/resources', {
+      const res = await fetch('/api/resources', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) setResources(await res.json());
@@ -511,7 +511,7 @@ const ResourcesManagementTab = ({ token }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const url = editingId ? `http://localhost:5000/api/resources/${editingId}` : 'http://localhost:5000/api/resources';
+      const url = editingId ? `/api/resources/${editingId}` : '/api/resources';
       const method = editingId ? 'PUT' : 'POST';
 
       let body;
@@ -562,7 +562,7 @@ const ResourcesManagementTab = ({ token }) => {
   const handleDelete = (id) => {
     showConfirm('Delete this resource permanently?', async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/resources/${id}`, {
+        const res = await fetch(`/api/resources/${id}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -639,7 +639,7 @@ const ResourcesManagementTab = ({ token }) => {
                   </span>
                   <p className="text-[11px] text-slate-400 leading-relaxed mt-2 line-clamp-3">{r.content}</p>
                   {r.file_url && (
-                    <a href={`http://localhost:5000${r.file_url}`} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#10b981] hover:underline mt-2 inline-block font-bold">
+                    <a href={`${r.file_url}`} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#10b981] hover:underline mt-2 inline-block font-bold">
                       View Attached File
                     </a>
                   )}
@@ -668,7 +668,7 @@ const SystemMaintenanceTab = ({ token }) => {
 
   const fetchMetrics = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/admin/metrics', {
+      const res = await fetch('/api/admin/metrics', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -687,7 +687,7 @@ const SystemMaintenanceTab = ({ token }) => {
 
   const runDbCheck = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/admin/db-check', {
+      const res = await fetch('/api/admin/db-check', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -703,7 +703,7 @@ const SystemMaintenanceTab = ({ token }) => {
 
   const flushCache = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/admin/clear-cache', {
+      const res = await fetch('/api/admin/clear-cache', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });

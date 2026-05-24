@@ -29,7 +29,7 @@ const Auth = () => {
     try {
       if (forgotStep === 1) {
         // Request OTP
-        const res = await fetch('http://localhost:5000/api/auth/forgot-password', {
+        const res = await fetch('/api/auth/forgot-password', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: forgotEmail })
@@ -40,7 +40,7 @@ const Auth = () => {
         setForgotStep(2);
       } else {
         // Submit OTP & New Password
-        const res = await fetch('http://localhost:5000/api/auth/reset-password', {
+        const res = await fetch('/api/auth/reset-password', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: forgotEmail, otp, newPassword })
@@ -67,7 +67,7 @@ const Auth = () => {
     const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
     
     try {
-      const res = await fetch(`http://localhost:5000${endpoint}`, {
+      const res = await fetch(`${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
