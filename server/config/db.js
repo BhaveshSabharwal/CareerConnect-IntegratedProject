@@ -1,4 +1,5 @@
 const { Sequelize } = require('sequelize');
+require('pg'); // Explicitly required for Vercel Serverless trace bundling
 require('dotenv').config();
 
 let sequelize;
