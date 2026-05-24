@@ -59,7 +59,7 @@ router.get('/metrics', verifyToken, isAdmin, async (req, res) => {
 router.post('/db-check', verifyToken, isAdmin, async (req, res) => {
   try {
     const issuesFound = [];
-    
+
     // Find profiles without users
     const profiles = await Profile.findAll();
     for (const p of profiles) {
@@ -94,14 +94,24 @@ router.post('/db-check', verifyToken, isAdmin, async (req, res) => {
 });
 
 // POST Clear performance cache
+const redisClient = require('../utils/redisClient');
+
 router.post('/clear-cache', verifyToken, isAdmin, async (req, res) => {
   try {
-    // Simulate flushed cache transition timing
-    const timingMs = Math.floor(Math.random() * 8) + 4; // 4-12ms
+    const startTime = Date.now();
+    // Flush the real Redis cache
+    let keysCleared = 0;
+    if (redisClient && redisClient.isOpen) {
+      const keys = await redisClient.keys('*');
+      keysCleared = keys.length;
+      await redisClient.flushDb();
+    }
+    const timingMs = Date.now() - startTime;
+
     res.json({
       success: true,
-      message: 'Redis performance cache flushed successfully',
-      keys_cleared: 184,
+      message: 'Redis cache flushed successfully',
+      keys_cleared: keysCleared,
       execution_time_ms: timingMs,
       timestamp: new Date().toISOString()
     });

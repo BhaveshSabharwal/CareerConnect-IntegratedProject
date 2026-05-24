@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const sequelize = require('./config/db');
-const { User } = require('./models');
+const { User, Notification } = require('./models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -80,12 +80,42 @@ app.put('/api/users/bulk/status', async (req, res) => {
       return res.status(400).json({ error: 'Invalid status value' });
     }
 
-    const is_active = (status === 'active');
+    // Fetch users for notification
+    const users = await User.findAll({ where: { id: userIds } });
+    
+    // Update users
     await User.update(
-      { status, is_active },
+      { status, is_active: status === 'active' },
       { where: { id: userIds } }
     );
-    res.json({ success: true, message: `Successfully updated status to ${status} for ${userIds.length} users.` });
+    
+    // Send notifications
+    for (const user of users) {
+      const isBlocked = status === 'blocked';
+      const title = isBlocked ? 'Account Blocked' : 'Account Reactivated';
+      const message = isBlocked 
+        ? 'Your account has been temporarily suspended by an Administrator. Please contact support.'
+        : 'Your account has been successfully reactivated! Welcome back to Career Connect.';
+        
+      await Notification.create({
+        user_id: user.id,
+        title,
+        message,
+        type: 'SYSTEM',
+        read: false
+      });
+      
+      const { sendEmail } = require('./utils/email');
+      const html = `
+        <div style="font-family: sans-serif; padding: 20px; background: #020617; color: #fff;">
+          <h2 style="color: ${isBlocked ? '#ef4444' : '#10b981'};">${title}</h2>
+          <p>${message}</p>
+        </div>
+      `;
+      await sendEmail({ to: user.email, subject: `Career Connect: ${title}`, html });
+    }
+    
+    res.json({ success: true, count: userIds.length });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -100,6 +130,30 @@ app.put('/api/users/:id/status', async (req, res) => {
     user.status = status;
     user.is_active = (status === 'active');
     await user.save();
+    
+    const isBlocked = status === 'blocked';
+    const title = isBlocked ? 'Account Blocked' : 'Account Reactivated';
+    const message = isBlocked 
+      ? 'Your account has been temporarily suspended by an Administrator. Please contact support.'
+      : 'Your account has been successfully reactivated! Welcome back to Career Connect.';
+      
+    await Notification.create({
+      user_id: user.id,
+      title,
+      message,
+      type: 'SYSTEM',
+      read: false
+    });
+    
+    const { sendEmail } = require('./utils/email');
+    const html = `
+      <div style="font-family: sans-serif; padding: 20px; background: #020617; color: #fff;">
+        <h2 style="color: ${isBlocked ? '#ef4444' : '#10b981'};">${title}</h2>
+        <p>${message}</p>
+      </div>
+    `;
+    await sendEmail({ to: user.email, subject: `Career Connect: ${title}`, html });
+    
     res.json(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
