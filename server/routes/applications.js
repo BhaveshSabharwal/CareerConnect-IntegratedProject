@@ -42,7 +42,7 @@ router.get('/me', verifyToken, isStudent, async (req, res) => {
     const applications = await Application.findAll({
       where: { student_id: req.user.id },
       include: [
-        { model: Job, attributes: ['title', 'company', 'location'] },
+        { model: Job, attributes: ['title', 'company', 'location', 'round_types', 'total_rounds'] },
         { model: Resume, attributes: ['title'] }
       ]
     });
@@ -80,7 +80,7 @@ router.get('/job/:jobId', verifyToken, isInterviewer, async (req, res) => {
 // PUT update application status (Interviewer)
 router.put('/:id/status', verifyToken, isInterviewer, async (req, res) => {
   try {
-    const { status, interview_date, meeting_link } = req.body; // 'shortlisted', 'rejected', 'selected', 'interview_scheduled'
+    const { status, interview_date, meeting_link, current_round } = req.body; // 'shortlisted', 'rejected', 'selected', 'interview_scheduled'
     const application = await Application.findByPk(req.params.id, {
       include: [
         { model: Job },
@@ -96,6 +96,9 @@ router.put('/:id/status', verifyToken, isInterviewer, async (req, res) => {
     }
 
     application.status = status;
+    if (current_round !== undefined) {
+      application.current_round = current_round;
+    }
     await application.save();
 
     // Generate Meet link if scheduling an interview
@@ -124,24 +127,33 @@ router.put('/:id/status', verifyToken, isInterviewer, async (req, res) => {
       }
     }
 
+    // Calculate round type
+    let roundInfo = '';
+    const roundIdx = (application.current_round || 1) - 1;
+    if (application.Job && application.Job.round_types && application.Job.round_types[roundIdx]) {
+      roundInfo = ` for ${application.Job.round_types[roundIdx]} (Round ${application.current_round})`;
+    } else if (application.current_round) {
+      roundInfo = ` for Round ${application.current_round}`;
+    }
+
     // Create Notification for the student
-    let message = `Your application for ${application.Job.title} at ${application.Job.company} has been updated to: ${status}.`;
+    let message = `Your application for ${application.Job.title} at ${application.Job.company} has been updated to: ${status}${roundInfo}.`;
     let emailSubject = `Application Update: ${application.Job.title} at ${application.Job.company}`;
     let emailHtml = `
       <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
         <h2>Hi ${application.student.name},</h2>
-        <p>Your application status for <strong>${application.Job.title}</strong> at <strong>${application.Job.company}</strong> has been updated to <strong>${status}</strong>.</p>
+        <p>Your application status for <strong>${application.Job.title}</strong> at <strong>${application.Job.company}</strong> has been updated to <strong>${status}</strong>${roundInfo}.</p>
         <p>Best regards,<br/>Career Connect Team</p>
       </div>
     `;
 
     if (status === 'shortlisted') {
-      message = `Congratulations! You have been shortlisted for ${application.Job.title} at ${application.Job.company}.`;
+      message = `Congratulations! You have been shortlisted for ${application.Job.title} at ${application.Job.company}${roundInfo}.`;
       emailSubject = `Congratulations! Shortlisted for ${application.Job.title} at ${application.Job.company}`;
       emailHtml = `
         <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f0fdf4; border-radius: 8px; color: #166534;">
           <h2 style="color: #15803d;">Great News, ${application.student.name}!</h2>
-          <p>We are excited to inform you that you have been <strong>Shortlisted</strong> for the role of <strong>${application.Job.title}</strong> at <strong>${application.Job.company}</strong>.</p>
+          <p>We are excited to inform you that you have been <strong>Shortlisted</strong> for the role of <strong>${application.Job.title}</strong> at <strong>${application.Job.company}</strong>${roundInfo}.</p>
           <p>The interviewer will schedule a discussion with you shortly. Keep an eye on your dashboard notifications!</p>
           <p style="margin-top: 20px; font-size: 12px; color: #86efac;">Sincerely,<br/>Career Connect Talent Team</p>
         </div>
@@ -154,25 +166,22 @@ router.put('/:id/status', verifyToken, isInterviewer, async (req, res) => {
           <h2>Hello ${application.student.name},</h2>
           <p>Thank you for your interest in the <strong>${application.Job.title}</strong> position at <strong>${application.Job.company}</strong>.</p>
           <p>Unfortunately, after careful review of all profiles, we have decided not to move forward with your application at this time.</p>
-          <p>We appreciate the time you took to apply and wish you the absolute best in your future job search.</p>
-          <p style="margin-top: 20px; font-size: 12px; color: #fca5a5;">Sincerely,<br/>Recruitment Team</p>
+          <p style="margin-top: 20px; font-size: 12px; color: #fca5a5;">We wish you the best in your career search.<br/>Career Connect Team</p>
         </div>
       `;
     } else if (status === 'interview_scheduled') {
-      const formattedDate = new Date(interview_date).toLocaleString();
-      message = `Your interview for ${application.Job.title} has been scheduled on ${formattedDate}. Link: ${generatedMeetLink}`;
-      emailSubject = `Interview Scheduled: ${application.Job.title} at ${application.Job.company}`;
+      message = `You have been invited to an interview for ${application.Job.title} at ${application.Job.company}${roundInfo} on ${new Date(interview_date).toLocaleString()}.`;
+      emailSubject = `Interview Invitation: ${application.Job.title} at ${application.Job.company}`;
       emailHtml = `
-        <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f5f3ff; border-radius: 8px; color: #5b21b6;">
-          <h2 style="color: #6d28d9;">Interview Details Inside!</h2>
-          <p>Dear ${application.student.name},</p>
-          <p>Your interview for the <strong>${application.Job.title}</strong> position at <strong>${application.Job.company}</strong> has been scheduled successfully.</p>
-          <div style="background: white; border: 1px solid #ddd; padding: 15px; border-radius: 6px; margin: 15px 0;">
-            <p style="margin: 5px 0;"><strong>Date & Time:</strong> ${formattedDate}</p>
-            <p style="margin: 5px 0;"><strong>Google Meet Meeting URL:</strong> <a href="${generatedMeetLink}" style="color: #7c3aed; font-weight: bold;">${generatedMeetLink}</a></p>
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+          <h2>Congratulations ${application.student.name}!</h2>
+          <p>You have been shortlisted and invited to an interview for <strong>${application.Job.title}</strong> at <strong>${application.Job.company}</strong>${roundInfo}.</p>
+          <div style="margin: 20px 0; padding: 15px; background: #f0fdf4; border-left: 4px solid #10b981;">
+            <p><strong>Date & Time:</strong> ${new Date(interview_date).toLocaleString()}</p>
+            <p><strong>Meeting Link:</strong> <a href="${generatedMeetLink}">${generatedMeetLink}</a></p>
           </div>
-          <p>Please log in 5 minutes early and ensure your webcam and mic are functioning perfectly. Good luck!</p>
-          <p style="margin-top: 20px; font-size: 12px; color: #c084fc;">Best regards,<br/>Career Connect Recruitment Team</p>
+          <p>Please ensure you join 5 minutes early.</p>
+          <p>Best regards,<br/>Career Connect Team</p>
         </div>
       `;
     } else if (status === 'selected') {
@@ -203,6 +212,60 @@ router.put('/:id/status', verifyToken, isInterviewer, async (req, res) => {
     });
 
     res.json(application);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST evaluate application using ATS engine
+router.post('/:id/evaluate', verifyToken, isInterviewer, async (req, res) => {
+  try {
+    const application = await Application.findByPk(req.params.id, {
+      include: [
+        { model: Job },
+        { model: Resume }
+      ]
+    });
+    
+    if (!application) return res.status(404).json({ error: 'Application not found' });
+    if (application.Job.interviewer_id !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
+
+    // Simple ATS Engine
+    const resumeText = (application.Resume.parsed_content || '').toLowerCase();
+    const jdText = ((application.Job.description || '') + ' ' + (application.Job.tags || []).join(' ')).toLowerCase();
+
+    // Extract basic alphanumeric words from JD as keywords (simple mock ATS)
+    const jdWords = Array.from(new Set(jdText.match(/[a-zA-Z]{4,}/g) || []));
+    
+    let matchCount = 0;
+    const matchedKeywords = [];
+    const missingKeywords = [];
+
+    jdWords.forEach(word => {
+      // Avoid common stop words
+      if (['this', 'that', 'with', 'from', 'have', 'your', 'will', 'must', 'skills', 'experience', 'years'].includes(word)) return;
+      if (resumeText.includes(word)) {
+        matchCount++;
+        matchedKeywords.push(word);
+      } else {
+        missingKeywords.push(word);
+      }
+    });
+
+    const totalValidKeywords = matchedKeywords.length + missingKeywords.length;
+    let score = totalValidKeywords === 0 ? 0 : Math.round((matchCount / totalValidKeywords) * 100);
+
+    // Save score to resume
+    application.Resume.ai_score = score;
+    application.Resume.ai_feedback = JSON.stringify({
+      strengths: matchedKeywords.slice(0, 5),
+      improvements: missingKeywords.slice(0, 5),
+      formatting: 'ATS engine completed keyword matching against Job Description.',
+      technicalGaps: missingKeywords.slice(0, 5)
+    });
+    await application.Resume.save();
+
+    res.json({ score, feedback: application.Resume.ai_feedback });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

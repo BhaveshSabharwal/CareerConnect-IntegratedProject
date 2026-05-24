@@ -14,11 +14,23 @@ const profileRouter = require('./routes/profiles');
 const resourcesRouter = require('./routes/resources');
 const adminRouter = require('./routes/admin');
 
+const fs = require('fs');
+const path = require('path');
+
 const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(uploadsDir));
 
 // Basic health check endpoint
 app.get('/api/health', async (req, res) => {
@@ -42,12 +54,41 @@ app.get('/api/health', async (req, res) => {
 // Users endpoint for testing & Admin moderation
 app.get('/api/users', async (req, res) => {
     try {
-        const users = await User.findAll({ attributes: ['id', 'name', 'email', 'role', 'status', 'created_at'] });
+        const { Profile } = require('./models');
+        const users = await User.findAll({ 
+            attributes: ['id', 'name', 'email', 'role', 'status', 'is_active', 'created_at'],
+            include: [{
+                model: Profile,
+                attributes: ['graduation_year', 'major']
+            }]
+        });
         res.json(users);
     } catch (error) {
         console.error('Error fetching users:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
+});
+
+// Bulk update user status (Admin moderation)
+app.put('/api/users/bulk/status', async (req, res) => {
+  try {
+    const { userIds, status } = req.body;
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({ error: 'userIds must be a non-empty array' });
+    }
+    if (status !== 'active' && status !== 'blocked') {
+      return res.status(400).json({ error: 'Invalid status value' });
+    }
+
+    const is_active = (status === 'active');
+    await User.update(
+      { status, is_active },
+      { where: { id: userIds } }
+    );
+    res.json({ success: true, message: `Successfully updated status to ${status} for ${userIds.length} users.` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Update user status (Admin moderation)
@@ -57,6 +98,7 @@ app.put('/api/users/:id/status', async (req, res) => {
     const user = await User.findByPk(req.params.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
     user.status = status;
+    user.is_active = (status === 'active');
     await user.save();
     res.json(user);
   } catch (error) {
@@ -89,6 +131,12 @@ app.post('/api/auth/login', async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
+    
+    // Check if the user is active/blocked
+    if (user.is_active === false) {
+      return res.status(403).json({ error: 'Your account has been blocked by the Administrator.' });
+    }
+
     const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET || 'secret123', { expiresIn: '1d' });
     res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
   } catch (error) {

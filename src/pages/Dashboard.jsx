@@ -108,7 +108,18 @@ const OverviewTab = ({ applications, skills }) => {
           <GlassCard className="h-96 flex flex-col">
             <h3 className="text-lg font-semibold text-white mb-4">Recent Status Alerts</h3>
             <div className="space-y-3 flex-1 overflow-y-auto pr-1">
-              {safeApps.length > 0 ? safeApps.map(app => (
+              {safeApps.length > 0 ? safeApps.map(app => {
+                let displayStatus = app.status.replace('_', ' ');
+                if ((app.status === 'shortlisted' || app.status === 'interview_scheduled') && app.current_round && app.Job?.round_types) {
+                  try {
+                    const rounds = typeof app.Job.round_types === 'string' ? JSON.parse(app.Job.round_types) : app.Job.round_types;
+                    if (Array.isArray(rounds) && rounds[app.current_round - 1]) {
+                      displayStatus = `${displayStatus} - ${rounds[app.current_round - 1]}`;
+                    }
+                  } catch (e) {}
+                }
+
+                return (
                 <div key={app.id} className="p-3 bg-white/5 border border-white/5 rounded-xl flex items-center justify-between hover:border-white/10 transition-colors">
                   <div className="truncate pr-2">
                     <div className="font-bold text-white text-xs truncate">{app.Job?.title}</div>
@@ -121,10 +132,10 @@ const OverviewTab = ({ applications, skills }) => {
                     app.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
                     'bg-slate-800 text-slate-400 border-white/5'
                   }`}>
-                    {app.status.replace('_', ' ')}
+                    {displayStatus}
                   </span>
                 </div>
-              )) : (
+              )}) : (
                 <div className="text-center py-16 text-slate-500 text-xs italic">
                   No active job applications found.
                 </div>
@@ -237,12 +248,19 @@ const AISuggestionsTab = ({ skills, activeJobs, guides }) => {
 
           <div className="space-y-3">
             {guides.length > 0 ? guides.map(guide => (
-              <div key={guide.id} className="p-3 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer group">
-                <div className="flex justify-between items-start gap-1">
-                  <h4 className="text-xs font-bold text-slate-200 group-hover:text-white transition-colors">{guide.title}</h4>
-                  <ArrowRight size={12} className="text-slate-500 group-hover:text-[#10b981] transition-colors mt-0.5 flex-shrink-0" />
+              <div key={guide.id} className="p-3 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer group flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-start gap-1">
+                    <h4 className="text-xs font-bold text-slate-200 group-hover:text-white transition-colors">{guide.title}</h4>
+                    <ArrowRight size={12} className="text-slate-500 group-hover:text-[#10b981] transition-colors mt-0.5 flex-shrink-0" />
+                  </div>
+                  <p className="text-[10px] text-slate-400 line-clamp-2 mt-1">{guide.content}</p>
                 </div>
-                <p className="text-[10px] text-slate-400 line-clamp-2 mt-1">{guide.content}</p>
+                {guide.file_url && (
+                  <a href={`http://localhost:5000${guide.file_url}`} target="_blank" rel="noopener noreferrer" className="mt-2 text-[10px] text-[#10b981] font-bold hover:underline self-start">
+                    Download Attached File
+                  </a>
+                )}
               </div>
             )) : (
               <div className="text-center py-16 text-slate-500 text-xs italic border border-dashed border-white/10 rounded-xl">

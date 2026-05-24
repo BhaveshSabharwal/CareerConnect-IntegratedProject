@@ -4,6 +4,7 @@ import GlassCard from '../components/ui/GlassCard';
 import FlatButton from '../components/ui/FlatButton';
 import { useAuth } from '../context/AuthContext';
 import { Tabs } from '../components/ui/Tabs';
+import { useAlert } from '../context/AlertContext';
 
 const InterviewerDashboard = () => {
   const { token } = useAuth();
@@ -29,7 +30,7 @@ const InterviewerDashboard = () => {
   }, [token]);
 
   const tabs = [
-    { id: 'jobs', label: 'My Jobs & Applicants', content: <JobsTab jobs={jobs} token={token} onRefresh={fetchJobs} /> },
+    { id: 'jobs', label: 'My Jobs & Applicants', content: <JobsListTab token={token} /> },
     { id: 'post', label: 'Post a Job', content: <PostJobTab token={token} onJobPosted={fetchJobs} /> },
   ];
 
@@ -60,17 +61,31 @@ const InterviewerDashboard = () => {
   );
 };
 
-const JobsTab = ({ jobs, token, onRefresh }) => {
+const JobsListTab = ({ token }) => {
+  const [jobs, setJobs] = useState([]);
   const [selectedJobId, setSelectedJobId] = useState(null);
   const [applicants, setApplicants] = useState([]);
-  
-  // Slide-in drawer resume state
   const [viewingResume, setViewingResume] = useState(null);
-
-  // Scheduling Modal State
   const [schedulingApp, setSchedulingApp] = useState(null);
   const [interviewDate, setInterviewDate] = useState('');
-  const [meetLink, setMeetLink] = useState('');
+  const [meetLink, setMeetLink] = useState('https://meet.google.com/' + Math.random().toString(36).substring(2,12));
+  const { showAlert } = useAlert();
+
+  const fetchJobs = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/jobs/all', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) setJobs(await res.json());
+    } catch (err) {
+      console.error(err);
+      showAlert('Failed to fetch jobs.', 'error');
+    }
+  };
+
+  useEffect(() => {
+    fetchJobs();
+  }, [token]);
 
   const handleViewApplicants = async (jobId) => {
     setSelectedJobId(jobId);
@@ -78,14 +93,14 @@ const JobsTab = ({ jobs, token, onRefresh }) => {
       const res = await fetch(`http://localhost:5000/api/applications/job/${jobId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const data = await res.json();
-      setApplicants(data);
+      if (res.ok) setApplicants(await res.json());
     } catch (err) {
       console.error(err);
+      showAlert('Failed to fetch applicants.', 'error');
     }
   };
 
-  const handleUpdateStatus = async (appId, status, extraBody = {}) => {
+  const handleUpdateStatus = async (appId, status, additionalData = {}) => {
     try {
       const res = await fetch(`http://localhost:5000/api/applications/${appId}/status`, {
         method: 'PUT',
@@ -93,36 +108,67 @@ const JobsTab = ({ jobs, token, onRefresh }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}` 
         },
-        body: JSON.stringify({ status, ...extraBody })
+        body: JSON.stringify({ status, ...additionalData })
       });
       if (res.ok) {
         handleViewApplicants(selectedJobId);
-        onRefresh();
-        alert(`Applicant status successfully updated to ${status}. Outgoing email log flushed.`);
+        setSchedulingApp(null);
+        setInterviewDate('');
+        setMeetLink('https://meet.google.com/' + Math.random().toString(36).substring(2,12));
+        showAlert(`Application status updated to ${status.replace('_', ' ')}.`, 'success');
       } else {
-        const errorData = await res.json();
-        alert(errorData.error);
+        const errData = await res.json().catch(() => ({}));
+        console.error('Update status failed:', errData);
+        showAlert(`Failed to update status. ${errData.error || ''}`, 'error');
       }
     } catch (err) {
       console.error(err);
+      showAlert('Error connecting to server.', 'error');
     }
   };
 
-  // Open Scheduler Modal
   const openScheduler = (app) => {
     setSchedulingApp(app);
-    setInterviewDate('');
-    // Auto-populate an unique Google Meet Link for convenience
-    setMeetLink(`https://meet.google.com/cc-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}`);
   };
 
-  const submitScheduler = async () => {
-    if (!interviewDate) return alert('Please select a Date and Time for the interview.');
-    await handleUpdateStatus(schedulingApp.id, 'interview_scheduled', {
-      interview_date: interviewDate,
-      meeting_link: meetLink
-    });
+  const submitSchedule = () => {
+    if (!interviewDate) return showAlert('Please select a valid date and time.', 'error');
+    
+    const parsedDate = new Date(interviewDate);
+    if (isNaN(parsedDate.getTime())) {
+      return showAlert('Invalid date selected. Please check the year.', 'error');
+    }
+
+    handleUpdateStatus(schedulingApp.id, 'interview_scheduled', { interview_date: interviewDate, meeting_link: meetLink });
     setSchedulingApp(null);
+  };
+
+  const handleEvaluateATS = async (appId) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/applications/${appId}/evaluate`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        handleViewApplicants(selectedJobId);
+        showAlert('ATS Evaluation completed and score updated.', 'success');
+      } else {
+        showAlert('Failed to evaluate with ATS.', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showAlert('Error during ATS Evaluation.', 'error');
+    }
+  };
+
+  const handleNextRound = async (app) => {
+    const nextRound = (app.current_round || 0) + 1;
+    const selectedJob = jobs.find(j => j.id === selectedJobId);
+    if (selectedJob && nextRound > selectedJob.total_rounds) {
+      await handleUpdateStatus(app.id, 'selected', { current_round: selectedJob.total_rounds });
+    } else {
+      await handleUpdateStatus(app.id, 'shortlisted', { current_round: nextRound });
+    }
   };
 
   return (
@@ -140,7 +186,7 @@ const JobsTab = ({ jobs, token, onRefresh }) => {
           >
             <h4 className="font-bold text-white text-sm">{job.title}</h4>
             <div className="flex justify-between items-center mt-3 text-xs">
-              <span className="text-slate-400">{job.location}</span>
+              <span className="text-slate-400">{job.location} • <span className="text-[#0ea5e9] font-bold">{job.total_rounds || 1} Rounds</span></span>
               <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                 job.status === 'active' ? 'bg-[#10b981]/20 text-[#10b981]' : 
                 job.status === 'pending_approval' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-red-500/20 text-red-500'
@@ -166,10 +212,11 @@ const JobsTab = ({ jobs, token, onRefresh }) => {
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h4 className="font-bold text-white text-sm">{app.student?.name}</h4>
-                        <p className="text-xs text-slate-400">{app.student?.email}</p>
+                        <p className="text-xs text-slate-400">{app.student?.email} • Round {app.current_round || 0} of {jobs.find(j => j.id === selectedJobId)?.total_rounds || 1}</p>
                       </div>
                       <span className={`text-[10px] px-2.5 py-0.5 rounded-full border uppercase tracking-wider font-mono ${
                         app.status === 'selected' ? 'bg-[#10b981]/10 text-[#10b981] border-[#10b981]/20' :
+                        app.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
                         app.status === 'interview_scheduled' ? 'bg-[#8b5cf6]/10 text-[#8b5cf6] border-[#8b5cf6]/20' :
                         app.status === 'shortlisted' ? 'bg-[#0ea5e9]/10 text-[#0ea5e9] border-[#0ea5e9]/20' :
                         'bg-slate-800 text-slate-400 border-white/5'
@@ -187,6 +234,12 @@ const JobsTab = ({ jobs, token, onRefresh }) => {
                       <div className="flex items-center gap-3 flex-shrink-0">
                         <span className="text-xs text-[#10b981] font-bold">Match Score: {app.Resume?.ai_score}%</span>
                         <button 
+                          onClick={() => handleEvaluateATS(app.id)}
+                          className="text-xs text-[#8b5cf6] hover:underline font-bold"
+                        >
+                          Run ATS Eval
+                        </button>
+                        <button 
                           onClick={() => setViewingResume(app.Resume)}
                           className="text-xs text-[#0ea5e9] hover:underline font-bold"
                         >
@@ -195,25 +248,31 @@ const JobsTab = ({ jobs, token, onRefresh }) => {
                       </div>
                     </div>
                     
-                    <div className="flex gap-2 justify-end">
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      {app.status !== 'rejected' && app.status !== 'selected' && (
+                        <FlatButton onClick={() => handleUpdateStatus(app.id, 'rejected')} variant="outline" className="text-[10px] py-1 px-3 border-red-500/20 text-red-400 hover:bg-red-500/10">
+                          <XCircle size={12} className="mr-1 inline" /> Reject
+                        </FlatButton>
+                      )}
+                      
                       {app.status === 'applied' && (
+                        <FlatButton onClick={() => handleNextRound(app)} variant="primary" className="text-[10px] py-1 px-3 bg-[#0ea5e9] hover:bg-[#0284c7] text-white">
+                          <CheckCircle size={12} className="mr-1 inline" /> Pass Resume
+                        </FlatButton>
+                      )}
+                      {app.status === 'shortlisted' && (
                         <>
-                          <FlatButton onClick={() => handleUpdateStatus(app.id, 'rejected')} variant="outline" className="text-[10px] py-1 px-3 border-red-500/20 text-red-400 hover:bg-red-500/10">
-                            <XCircle size={12} className="mr-1 inline" /> Reject
+                          <FlatButton onClick={() => openScheduler(app)} variant="primary" className="text-[10px] py-1 px-3 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white">
+                            <Calendar size={12} className="mr-1 inline" /> Schedule Round {app.current_round || 1}
                           </FlatButton>
-                          <FlatButton onClick={() => handleUpdateStatus(app.id, 'shortlisted')} variant="primary" className="text-[10px] py-1 px-3 bg-[#0ea5e9] hover:bg-[#0284c7] text-white">
-                            <CheckCircle size={12} className="mr-1 inline" /> Shortlist
+                          <FlatButton onClick={() => handleNextRound(app)} variant="primary" className="text-[10px] py-1 px-3 bg-[#10b981] hover:bg-[#059669] text-white">
+                            <CheckCircle size={12} className="mr-1 inline" /> Pass Without Interview
                           </FlatButton>
                         </>
                       )}
-                      {app.status === 'shortlisted' && (
-                        <FlatButton onClick={() => openScheduler(app)} variant="primary" className="text-[10px] py-1 px-3 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white">
-                          <Calendar size={12} className="mr-1 inline" /> Schedule Interview
-                        </FlatButton>
-                      )}
                       {app.status === 'interview_scheduled' && (
-                        <FlatButton onClick={() => handleUpdateStatus(app.id, 'selected')} variant="primary" className="text-[10px] py-1 px-3 bg-[#10b981] hover:bg-[#059669] text-white">
-                          <CheckCircle size={12} className="mr-1 inline" /> Make Offer
+                        <FlatButton onClick={() => handleNextRound(app)} variant="primary" className="text-[10px] py-1 px-3 bg-[#10b981] hover:bg-[#059669] text-white">
+                          <CheckCircle size={12} className="mr-1 inline" /> Mark Round Passed
                         </FlatButton>
                       )}
                     </div>
@@ -255,12 +314,30 @@ const JobsTab = ({ jobs, token, onRefresh }) => {
                 <div className="text-[10px] text-[#10b981] font-bold mt-1">Verified Audit Score</div>
               </GlassCard>
 
-              {/* Parsed Body Area */}
+              {/* Parsed Body Area & PDF Viewer */}
               <div>
-                <h4 className="text-xs font-bold text-[#0ea5e9] uppercase tracking-wider mb-2">Extracted Body Text</h4>
-                <div className="p-3 bg-black/30 border border-white/5 rounded-lg text-xs text-slate-300 leading-relaxed font-mono max-h-48 overflow-y-auto">
-                  {viewingResume.parsed_content || "No textual resume parsed information uploaded. File is clean PDF attachment format."}
-                </div>
+                <h4 className="text-xs font-bold text-[#0ea5e9] uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <span>Resume Source Content</span>
+                  {viewingResume.file_url && viewingResume.file_url !== 'https://example.com/resume.pdf' && (
+                    <a href={`http://localhost:5000${viewingResume.file_url}`} target="_blank" rel="noopener noreferrer" className="text-[#10b981] hover:underline normal-case">
+                      (Download PDF)
+                    </a>
+                  )}
+                </h4>
+                
+                {viewingResume.file_url && viewingResume.file_url.endsWith('.pdf') ? (
+                  <div className="bg-black/30 border border-white/5 rounded-lg overflow-hidden h-96">
+                    <iframe 
+                      src={`http://localhost:5000${viewingResume.file_url}`} 
+                      className="w-full h-full"
+                      title="Resume PDF Viewer"
+                    />
+                  </div>
+                ) : (
+                  <div className="p-3 bg-black/30 border border-white/5 rounded-lg text-xs text-slate-300 leading-relaxed font-mono max-h-48 overflow-y-auto">
+                    {viewingResume.parsed_content || "No textual resume parsed information uploaded. File is clean PDF attachment format."}
+                  </div>
+                )}
               </div>
 
               {/* Extracted Details summary */}
@@ -345,7 +422,7 @@ const JobsTab = ({ jobs, token, onRefresh }) => {
                 Cancel
               </FlatButton>
               <FlatButton 
-                onClick={submitScheduler}
+                onClick={submitSchedule}
                 variant="primary"
                 className="bg-[#8b5cf6] hover:bg-[#7c3aed] text-white text-xs font-bold px-4"
               >
@@ -361,31 +438,74 @@ const JobsTab = ({ jobs, token, onRefresh }) => {
 
 const PostJobTab = ({ token, onJobPosted }) => {
   const [formData, setFormData] = useState({
-    title: '', company: '', location: '', type: 'Full-time', salary: '', tags: '', description: '', jd_url: ''
+    title: '', company: '', location: '', type: 'Full-time', salary: '', tags: '', description: '', jd_url: '', total_rounds: 1
   });
+  const [roundTypes, setRoundTypes] = useState(['']);
+  const [selectedJdFile, setSelectedJdFile] = useState(null);
+  const { showAlert } = useAlert();
+
+  const handleRoundsChange = (e) => {
+    const rounds = parseInt(e.target.value) || 1;
+    setFormData({...formData, total_rounds: rounds});
+    setRoundTypes(prev => {
+      const newTypes = [...prev];
+      if (rounds > prev.length) {
+        for (let i = prev.length; i < rounds; i++) newTypes.push('');
+      } else if (rounds < prev.length) {
+        newTypes.splice(rounds);
+      }
+      return newTypes;
+    });
+  };
+
+  const handleRoundTypeChange = (index, value) => {
+    const newTypes = [...roundTypes];
+    newTypes[index] = value;
+    setRoundTypes(newTypes);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const tagsArray = formData.tags.split(',').map(t => t.trim()).filter(t => t);
+      
+      const body = new FormData();
+      body.append('title', formData.title);
+      body.append('company', formData.company);
+      body.append('location', formData.location);
+      body.append('type', formData.type);
+      body.append('salary', formData.salary);
+      body.append('tags', JSON.stringify(tagsArray));
+      body.append('description', formData.description);
+      body.append('jd_url', formData.jd_url);
+      body.append('total_rounds', formData.total_rounds);
+      body.append('round_types', JSON.stringify(roundTypes.map(r => r || 'Unnamed Round')));
+      
+      if (selectedJdFile) {
+        body.append('file', selectedJdFile);
+      }
+
       const res = await fetch('http://localhost:5000/api/jobs', {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ ...formData, tags: tagsArray })
+        body: body
       });
       if (res.ok) {
-        alert('Job posted successfully! Pending Admin Approval.');
-        setFormData({ title: '', company: '', location: '', type: 'Full-time', salary: '', tags: '', description: '', jd_url: '' });
-        onJobPosted();
+        showAlert('Job posted successfully! Pending Admin Approval.', 'success');
+        setFormData({ title: '', company: '', location: '', type: 'Full-time', salary: '', tags: '', description: '', jd_url: '', total_rounds: 1 });
+        setRoundTypes(['']);
+        setSelectedJdFile(null);
+        if (document.getElementById('jdFile')) document.getElementById('jdFile').value = '';
+        if (onJobPosted) onJobPosted();
       } else {
         const data = await res.json();
-        alert(data.error);
+        showAlert(data.error || 'Failed to post job', 'error');
       }
     } catch (err) {
       console.error(err);
+      showAlert('Error connecting to server', 'error');
     }
   };
 
@@ -417,7 +537,7 @@ const PostJobTab = ({ token, onJobPosted }) => {
             </select>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs text-slate-400 mb-1">Salary Range</label>
             <input required type="text" placeholder="e.g. $120,000 - $140,000" value={formData.salary} onChange={e => setFormData({...formData, salary: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-lg p-2.5 text-xs text-white" />
@@ -426,14 +546,39 @@ const PostJobTab = ({ token, onJobPosted }) => {
             <label className="block text-xs text-slate-400 mb-1">Tags (comma separated)</label>
             <input type="text" placeholder="React, Python, Node" value={formData.tags} onChange={e => setFormData({...formData, tags: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-lg p-2.5 text-xs text-white" />
           </div>
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">Total Rounds</label>
+            <input required type="number" min="1" max="10" placeholder="1" value={formData.total_rounds} onChange={handleRoundsChange} className="w-full bg-black/20 border border-white/10 rounded-lg p-2.5 text-xs text-white" />
+          </div>
         </div>
+
+        {/* Dynamic Round Types */}
+        <div className="p-3 bg-black/30 border border-white/5 rounded-lg">
+          <label className="block text-xs text-slate-300 mb-3 font-bold flex items-center gap-2"><CheckCircle size={14} className="text-[#8b5cf6]" /> Round Definitions</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {roundTypes.map((rt, idx) => (
+              <div key={idx}>
+                <label className="block text-[10px] text-slate-500 mb-1">Round {idx + 1} Type</label>
+                <input 
+                  required 
+                  type="text" 
+                  placeholder="e.g. Technical Interview" 
+                  value={rt} 
+                  onChange={e => handleRoundTypeChange(idx, e.target.value)} 
+                  className="w-full bg-black/20 border border-white/10 rounded p-2 text-xs text-slate-200" 
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div>
           <label className="block text-xs text-slate-400 mb-1">Detailed Job Description</label>
           <textarea required rows={4} placeholder="Summarize skills, day-to-day requirements, and technology specifications..." value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-lg p-2.5 text-xs text-slate-200 resize-none" />
         </div>
         <div>
-          <label className="block text-xs text-slate-400 mb-1">Mock JD URL / PDF Attachment Link</label>
-          <input type="text" placeholder="https://example.com/attachments/jd_file.pdf" value={formData.jd_url} onChange={e => setFormData({...formData, jd_url: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-lg p-2.5 text-xs text-slate-200" />
+          <label className="block text-xs text-slate-400 mb-1">Upload JD File (PDF)</label>
+          <input id="jdFile" type="file" accept=".pdf,.doc,.docx" onChange={e => setSelectedJdFile(e.target.files[0])} className="w-full bg-black/20 border border-white/10 rounded-lg p-2.5 text-xs text-slate-200" />
         </div>
         
         <FlatButton type="submit" variant="primary" className="w-full bg-[#10b981] hover:bg-[#059669] text-white py-3 text-xs font-bold mt-4">

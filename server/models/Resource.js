@@ -13,7 +13,11 @@ const Resource = sequelize.define('Resource', {
   },
   content: {
     type: DataTypes.TEXT,
-    allowNull: false,
+    allowNull: true,
+  },
+  file_url: {
+    type: DataTypes.STRING,
+    allowNull: true,
   },
   type: {
     type: DataTypes.ENUM('interview_prep', 'career_guidance'),

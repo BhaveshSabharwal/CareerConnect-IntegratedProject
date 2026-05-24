@@ -77,16 +77,25 @@ const Explorer = () => {
               {guidance.map((path, index) => {
                 const accentColor = colors[index % colors.length];
                 return (
-                  <GlassCard key={path.id} className="relative overflow-hidden group hover:-translate-y-1 transition-transform border border-white/5">
+                  <GlassCard key={path.id} className="relative overflow-hidden group hover:-translate-y-1 transition-transform border border-white/5 flex flex-col">
                     <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity">
                       <Award size={54} color={accentColor} />
                     </div>
-                    <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-1.5 truncate">
-                      <span style={{ backgroundColor: accentColor }} className="w-2 h-2 rounded-full inline-block"></span>
-                      {path.title}
-                    </h3>
-                    <p className="text-xs text-slate-400 line-clamp-4 leading-relaxed mb-4">{path.content}</p>
-                    <div className="text-[10px] text-slate-500 font-mono flex items-center gap-1 mt-auto">
+                    <div className="flex-grow">
+                      <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-1.5 truncate">
+                        <span style={{ backgroundColor: accentColor }} className="w-2 h-2 rounded-full inline-block"></span>
+                        {path.title}
+                      </h3>
+                      <p className="text-xs text-slate-400 line-clamp-4 leading-relaxed mb-4">{path.content}</p>
+                    </div>
+                    
+                    {path.file_url && (
+                      <a href={`http://localhost:5000${path.file_url}`} target="_blank" rel="noopener noreferrer" className="mb-4 text-[10px] text-[#0ea5e9] font-bold hover:underline self-start flex items-center gap-1">
+                        <ExternalLink size={10} /> Download Associated Material
+                      </a>
+                    )}
+                    
+                    <div className="text-[10px] text-slate-500 font-mono flex items-center gap-1 mt-auto border-t border-white/5 pt-2">
                       <span>Publisher: Admin •</span>
                       <span>Scanned {new Date(path.created_at).toLocaleDateString()}</span>
                     </div>

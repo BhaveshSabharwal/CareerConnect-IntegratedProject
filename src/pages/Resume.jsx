@@ -22,6 +22,21 @@ const Resume = () => {
   const [major, setMajor] = useState('');
   const [graduationYear, setGraduationYear] = useState('');
   const [academicMarks, setAcademicMarks] = useState('');
+  const [projects, setProjects] = useState([]);
+  const [experience, setExperience] = useState([]);
+  const [activeEditTab, setActiveEditTab] = useState('basic'); // 'basic', 'projects', 'experience'
+
+  // Input states for adding new project
+  const [newProjName, setNewProjName] = useState('');
+  const [newProjDate, setNewProjDate] = useState('');
+  const [newProjRepo, setNewProjRepo] = useState('');
+  const [newProjDesc, setNewProjDesc] = useState('');
+
+  // Input states for adding new experience
+  const [newExpRole, setNewExpRole] = useState('');
+  const [newExpCompany, setNewExpCompany] = useState('');
+  const [newExpDuration, setNewExpDuration] = useState('');
+  const [newExpDesc, setNewExpDesc] = useState('');
   
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -43,6 +58,8 @@ const Resume = () => {
         setGraduationYear(data.graduation_year || '');
         setAcademicMarks(data.academic_marks || '');
         setSkills(data.skills || []);
+        setProjects(data.projects || []);
+        setExperience(data.experience || []);
         setProfileData({
           name: data.User?.name || user?.name || '',
           email: data.User?.email || user?.email || '',
@@ -93,7 +110,9 @@ const Resume = () => {
           graduation_year: parseInt(graduationYear) || undefined,
           academic_marks: academicMarks,
           name: profileData.name,
-          skills
+          skills,
+          projects,
+          experience
         })
       });
       if (res.ok) {
@@ -121,6 +140,8 @@ const Resume = () => {
     }
   };
 
+  const [selectedResumeFile, setSelectedResumeFile] = useState(null);
+
   const submitResumeUpload = async () => {
     if (!newResumeTitle) return;
     setIsAnalyzing(true);
@@ -128,22 +149,28 @@ const Resume = () => {
       // Simulate small loader delay to make it feel premium & AI-driven
       await new Promise(r => setTimeout(r, 1200));
 
+      const formData = new FormData();
+      formData.append('title', newResumeTitle);
+      formData.append('parsed_content', resumeTextContent || `Highly competent developer skilled in ${skills.join(', ')}. Academic focus on ${major}. Graduation year ${graduationYear}.`);
+      if (selectedResumeFile) {
+        formData.append('file', selectedResumeFile);
+      } else {
+        formData.append('file_url', 'https://example.com/resume.pdf');
+      }
+
       const res = await fetch('http://localhost:5000/api/resumes', {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}` 
         },
-        body: JSON.stringify({
-          title: newResumeTitle,
-          file_url: 'https://example.com/resume.pdf',
-          parsed_content: resumeTextContent || `Highly competent developer skilled in ${skills.join(', ')}. Academic focus on ${major}. Graduation year ${graduationYear}.`
-        })
+        body: formData
       });
       if (res.ok) {
         const created = await res.json();
         setNewResumeTitle('');
         setResumeTextContent('');
+        setSelectedResumeFile(null);
+        if (document.getElementById('actualResumeFile')) document.getElementById('actualResumeFile').value = '';
         setShowUploadForm(false);
         await fetchResumes();
         setSelectedResume(created);
@@ -246,31 +273,211 @@ const Resume = () => {
                 <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
                   <User size={18} className="text-[#0ea5e9]" /> Edit Student Profile
                 </h3>
-                <div>
-                  <label className="text-xs text-slate-400 block mb-1">Full Name</label>
-                  <input type="text" value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded px-2.5 py-1.5 text-white text-sm focus:outline-none focus:border-[#0ea5e9] transition-colors" />
+
+                {/* Sub-tab Navigation */}
+                <div className="flex border-b border-white/10 mb-4 text-[10px] font-bold uppercase tracking-wider">
+                  <button 
+                    type="button" 
+                    onClick={() => setActiveEditTab('basic')}
+                    className={`flex-1 pb-2 border-b-2 text-center transition-all cursor-pointer ${activeEditTab === 'basic' ? 'border-[#0ea5e9] text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                  >
+                    Basic
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setActiveEditTab('projects')}
+                    className={`flex-1 pb-2 border-b-2 text-center transition-all cursor-pointer ${activeEditTab === 'projects' ? 'border-[#0ea5e9] text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                  >
+                    Projects ({projects.length})
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setActiveEditTab('experience')}
+                    className={`flex-1 pb-2 border-b-2 text-center transition-all cursor-pointer ${activeEditTab === 'experience' ? 'border-[#0ea5e9] text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                  >
+                    Experience ({experience.length})
+                  </button>
                 </div>
-                <div>
-                  <label className="text-xs text-slate-400 block mb-1">Bio / Headline</label>
-                  <textarea rows={3} value={bio} onChange={e => setBio(e.target.value)} placeholder="Aspiring Software Engineer focused on web applications..." className="w-full bg-black/20 border border-white/10 rounded px-2.5 py-1.5 text-white text-sm focus:outline-none focus:border-[#0ea5e9] transition-colors resize-none" />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-xs text-slate-400 block mb-1">Academic Major</label>
-                    <input type="text" placeholder="Computer Science" value={major} onChange={e => setMajor(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded px-2 py-1.5 text-white text-xs focus:outline-none focus:border-[#0ea5e9]" />
+
+                {/* Sub-tab Views */}
+                {activeEditTab === 'basic' && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-[10px] text-slate-400 block mb-1">Full Name</label>
+                      <input type="text" value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-[#0ea5e9] transition-colors" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-400 block mb-1">Bio / Headline</label>
+                      <textarea rows={3} value={bio} onChange={e => setBio(e.target.value)} placeholder="Aspiring Software Engineer focused on web applications..." className="w-full bg-black/20 border border-white/10 rounded px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-[#0ea5e9] transition-colors resize-none leading-relaxed" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-1">Academic Major</label>
+                        <input type="text" placeholder="Computer Science" value={major} onChange={e => setMajor(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded px-2 py-1.5 text-white text-xs focus:outline-none focus:border-[#0ea5e9]" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-1">Graduation Year</label>
+                        <input type="number" placeholder="2026" value={graduationYear} onChange={e => setGraduationYear(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded px-2 py-1.5 text-white text-xs focus:outline-none focus:border-[#0ea5e9]" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-400 block mb-1">Academic Marks / GPA</label>
+                      <input type="text" placeholder="GPA: 3.8/4.0 or 85%" value={academicMarks} onChange={e => setAcademicMarks(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-[#0ea5e9] transition-colors" />
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-xs text-slate-400 block mb-1">Graduation Year</label>
-                    <input type="number" placeholder="2026" value={graduationYear} onChange={e => setGraduationYear(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded px-2 py-1.5 text-white text-xs focus:outline-none focus:border-[#0ea5e9]" />
+                )}
+
+                {activeEditTab === 'projects' && (
+                  <div className="space-y-3">
+                    {/* Existing project list */}
+                    <div className="max-h-36 overflow-y-auto space-y-2 border-b border-white/5 pb-3 pr-1">
+                      {projects.length > 0 ? projects.map((proj, idx) => (
+                        <div key={idx} className="flex justify-between items-center bg-black/20 p-2 rounded-lg border border-white/5 text-[11px]">
+                          <div className="truncate">
+                            <div className="font-bold text-white truncate">{proj.name}</div>
+                            <div className="text-[9px] text-slate-500 font-mono">{proj.date}</div>
+                          </div>
+                          <button 
+                            type="button" 
+                            onClick={() => setProjects(prev => prev.filter((_, i) => i !== idx))} 
+                            className="text-slate-400 hover:text-red-400 transition-colors p-1"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      )) : (
+                        <div className="text-center py-4 text-slate-500 italic text-[10px]">No projects added. Add one below!</div>
+                      )}
+                    </div>
+                    
+                    {/* Add project form */}
+                    <div className="bg-white/5 p-2.5 rounded-lg border border-white/5 space-y-2">
+                      <h4 className="text-[9px] font-bold text-[#0ea5e9] uppercase tracking-wider">Add Project</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input 
+                          type="text" 
+                          placeholder="Project Name" 
+                          value={newProjName} 
+                          onChange={e => setNewProjName(e.target.value)} 
+                          className="bg-black/30 border border-white/10 rounded p-1.5 text-[10px] text-white focus:outline-none"
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="Date (e.g. May 2026)" 
+                          value={newProjDate} 
+                          onChange={e => setNewProjDate(e.target.value)} 
+                          className="bg-black/30 border border-white/10 rounded p-1.5 text-[10px] text-white focus:outline-none"
+                        />
+                      </div>
+                      <input 
+                        type="text" 
+                        placeholder="Repo Link (optional)" 
+                        value={newProjRepo} 
+                        onChange={e => setNewProjRepo(e.target.value)} 
+                        className="w-full bg-black/30 border border-white/10 rounded p-1.5 text-[10px] text-white focus:outline-none"
+                      />
+                      <textarea 
+                        rows={2} 
+                        placeholder="Brief description of achievements..." 
+                        value={newProjDesc} 
+                        onChange={e => setNewProjDesc(e.target.value)} 
+                        className="w-full bg-black/30 border border-white/10 rounded p-1.5 text-[10px] text-white focus:outline-none resize-none leading-relaxed"
+                      />
+                      <button 
+                        type="button"
+                        disabled={!newProjName || !newProjDate || !newProjDesc}
+                        onClick={() => {
+                          setProjects(prev => [...prev, { name: newProjName, date: newProjDate, repoLink: newProjRepo, description: newProjDesc }]);
+                          setNewProjName('');
+                          setNewProjDate('');
+                          setNewProjRepo('');
+                          setNewProjDesc('');
+                        }}
+                        className="w-full text-center py-1 bg-[#0ea5e9]/20 hover:bg-[#0ea5e9]/35 text-[#0ea5e9] hover:text-white rounded text-[10px] font-bold border border-[#0ea5e9]/20 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        + Add to Projects
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <label className="text-xs text-slate-400 block mb-1">Academic Marks / GPA</label>
-                  <input type="text" placeholder="GPA: 3.8/4.0 or 85%" value={academicMarks} onChange={e => setAcademicMarks(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded px-2.5 py-1.5 text-white text-sm focus:outline-none focus:border-[#0ea5e9] transition-colors" />
-                </div>
-                <div className="flex gap-2 justify-end mt-4 pt-2">
-                  <button onClick={() => setIsEditingProfile(false)} className="text-xs text-slate-400 hover:text-white px-2 py-1 transition-colors">Cancel</button>
-                  <button onClick={handleSaveProfile} className="text-xs bg-[#10b981] hover:bg-[#059669] text-white px-4 py-1.5 rounded transition-colors font-medium">Save Details</button>
+                )}
+
+                {activeEditTab === 'experience' && (
+                  <div className="space-y-3">
+                    {/* Existing work history */}
+                    <div className="max-h-36 overflow-y-auto space-y-2 border-b border-white/5 pb-3 pr-1">
+                      {experience.length > 0 ? experience.map((exp, idx) => (
+                        <div key={idx} className="flex justify-between items-center bg-black/20 p-2 rounded-lg border border-white/5 text-[11px]">
+                          <div className="truncate">
+                            <div className="font-bold text-white truncate">{exp.role}</div>
+                            <div className="text-[9px] text-slate-400">{exp.company} • <span className="font-mono text-slate-500">{exp.duration}</span></div>
+                          </div>
+                          <button 
+                            type="button" 
+                            onClick={() => setExperience(prev => prev.filter((_, i) => i !== idx))} 
+                            className="text-slate-400 hover:text-red-400 transition-colors p-1"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      )) : (
+                        <div className="text-center py-4 text-slate-500 italic text-[10px]">No experience listed (Optional).</div>
+                      )}
+                    </div>
+                    
+                    {/* Add work history form */}
+                    <div className="bg-white/5 p-2.5 rounded-lg border border-white/5 space-y-2">
+                      <h4 className="text-[9px] font-bold text-[#10b981] uppercase tracking-wider">Add Experience (Optional)</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input 
+                          type="text" 
+                          placeholder="Role Title" 
+                          value={newExpRole} 
+                          onChange={e => setNewExpRole(e.target.value)} 
+                          className="bg-black/30 border border-white/10 rounded p-1.5 text-[10px] text-white focus:outline-none"
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="Company Name" 
+                          value={newExpCompany} 
+                          onChange={e => setNewExpCompany(e.target.value)} 
+                          className="bg-black/30 border border-white/10 rounded p-1.5 text-[10px] text-white focus:outline-none"
+                        />
+                      </div>
+                      <input 
+                        type="text" 
+                        placeholder="Duration (e.g. Jun 2024 - Present)" 
+                        value={newExpDuration} 
+                        onChange={e => setNewExpDuration(e.target.value)} 
+                        className="w-full bg-black/30 border border-white/10 rounded p-1.5 text-[10px] text-white focus:outline-none"
+                      />
+                      <textarea 
+                        rows={2} 
+                        placeholder="Describe your internship or engineering role responsibilities..." 
+                        value={newExpDesc} 
+                        onChange={e => setNewExpDesc(e.target.value)} 
+                        className="w-full bg-black/30 border border-white/10 rounded p-1.5 text-[10px] text-white focus:outline-none resize-none leading-relaxed"
+                      />
+                      <button 
+                        type="button"
+                        disabled={!newExpRole || !newExpCompany || !newExpDuration || !newExpDesc}
+                        onClick={() => {
+                          setExperience(prev => [...prev, { role: newExpRole, company: newExpCompany, duration: newExpDuration, description: newExpDesc }]);
+                          setNewExpRole('');
+                          setNewExpCompany('');
+                          setNewExpDuration('');
+                          setNewExpDesc('');
+                        }}
+                        className="w-full text-center py-1 bg-[#10b981]/20 hover:bg-[#10b981]/35 text-[#10b981] hover:text-white rounded text-[10px] font-bold border border-[#10b981]/20 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        + Add to Experiences
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2 justify-end mt-4 pt-2 border-t border-white/5">
+                  <button onClick={() => setIsEditingProfile(false)} className="text-xs text-slate-400 hover:text-white px-2 py-1 transition-colors cursor-pointer">Cancel</button>
+                  <button onClick={handleSaveProfile} className="text-xs bg-[#10b981] hover:bg-[#059669] text-white px-4 py-1.5 rounded transition-colors font-medium cursor-pointer">Save Details</button>
                 </div>
               </div>
             ) : (
@@ -360,15 +567,22 @@ const Resume = () => {
                 />
                 
                 <div>
-                  <label className="text-[10px] text-slate-400 block mb-1">Simulate AI Parser Extraction (Paste Resume Text)</label>
-                  <textarea 
-                    rows={4} 
-                    placeholder="Full Stack developer experienced in React, JavaScript, Node.js, SQL..."
-                    value={resumeTextContent}
-                    onChange={(e) => setResumeTextContent(e.target.value)}
-                    className="w-full bg-black/20 border border-white/10 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#8b5cf6] resize-none"
-                  />
+                  <label className="text-[10px] text-slate-400 block mb-1">Attach Actual Resume (PDF)</label>
+                  <input id="actualResumeFile" type="file" accept=".pdf" onChange={e => setSelectedResumeFile(e.target.files[0])} className="w-full bg-black/20 border border-white/10 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#8b5cf6]" />
                 </div>
+                
+                {!selectedResumeFile && (
+                  <div>
+                    <label className="text-[10px] text-slate-400 block mb-1">Simulate AI Parser Extraction (Paste Resume Text if no PDF)</label>
+                    <textarea 
+                      rows={4} 
+                      placeholder="Full Stack developer experienced in React, JavaScript, Node.js, SQL..."
+                      value={resumeTextContent}
+                      onChange={(e) => setResumeTextContent(e.target.value)}
+                      className="w-full bg-black/20 border border-white/10 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#8b5cf6] resize-none"
+                    />
+                  </div>
+                )}
 
                 <div className="flex justify-end gap-1.5">
                   <button onClick={() => setShowUploadForm(false)} className="text-[10px] text-slate-400 hover:text-white px-2 py-1">Cancel</button>
@@ -444,7 +658,12 @@ const Resume = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] text-slate-500">Last scanned: {new Date(selectedResume.created_at).toLocaleDateString()}</span>
+                    <span className="text-[10px] text-slate-500 block mb-1">Last scanned: {new Date(selectedResume.created_at).toLocaleDateString()}</span>
+                    {selectedResume.file_url && selectedResume.file_url !== 'https://example.com/resume.pdf' && (
+                      <a href={`http://localhost:5000${selectedResume.file_url}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#0ea5e9] hover:underline font-bold">
+                        Download PDF Resume
+                      </a>
+                    )}
                   </div>
                 </div>
 
@@ -550,34 +769,99 @@ const Resume = () => {
                     </div>
                   </div>
 
-                  <div>
-                    <h3 className="text-xl font-bold text-white print:text-slate-900 mb-3 border-b border-white/10 print:border-slate-200 pb-1">
-                      NOTABLE PROJECTS & EXPERIENCE
-                    </h3>
-                    <div className="space-y-4">
-                      <div className="relative pl-4 border-l-2 border-white/10 print:border-slate-200">
-                        <div className="flex justify-between items-start mb-0.5 text-sm">
-                          <h4 className="font-bold text-white print:text-slate-800">Lead Portfolio Creator</h4>
-                          <span className="text-xs text-slate-400 print:text-slate-500">Dec 2024 - Present</span>
+                  {projects.length === 0 && experience.length === 0 ? (
+                    <div>
+                      <h3 className="text-xl font-bold text-white print:text-slate-900 mb-3 border-b border-white/10 print:border-slate-200 pb-1 flex items-center justify-between">
+                        <span>NOTABLE PROJECTS & EXPERIENCE</span>
+                        <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30 font-medium tracking-wider uppercase no-print">Demo Placeholder</span>
+                      </h3>
+                      <div className="space-y-4">
+                        <div className="relative pl-4 border-l-2 border-white/10 print:border-slate-200">
+                          <div className="flex justify-between items-start mb-0.5 text-sm">
+                            <h4 className="font-bold text-white print:text-slate-800">Lead Portfolio Creator</h4>
+                            <span className="text-xs text-slate-400 print:text-slate-500">Dec 2024 - Present</span>
+                          </div>
+                          <p className="text-xs text-slate-300 print:text-slate-600 mb-1">Career Connect System Portfolio</p>
+                          <p className="text-xs text-slate-400 print:text-slate-500">
+                            Designed and programmed React client layers with glassmorphism interfaces, including simulated Redis analytics dashboard and Nodemailer developer log channels.
+                          </p>
                         </div>
-                        <p className="text-xs text-slate-300 print:text-slate-600 mb-1">Career Connect System Portfolio</p>
-                        <p className="text-xs text-slate-400 print:text-slate-500">
-                          Designed and programmed React client layers with glassmorphism interfaces, including simulated Redis analytics dashboard and Nodemailer developer log channels.
-                        </p>
-                      </div>
 
-                      <div className="relative pl-4 border-l-2 border-white/10 print:border-slate-200">
-                        <div className="flex justify-between items-start mb-0.5 text-sm">
-                          <h4 className="font-bold text-white print:text-slate-800">Undergraduate Web Assessor</h4>
-                          <span className="text-xs text-slate-400 print:text-slate-500">Jun 2023 - Nov 2024</span>
+                        <div className="relative pl-4 border-l-2 border-white/10 print:border-slate-200">
+                          <div className="flex justify-between items-start mb-0.5 text-sm">
+                            <h4 className="font-bold text-white print:text-slate-800">Undergraduate Web Assessor</h4>
+                            <span className="text-xs text-slate-400 print:text-slate-500">Jun 2023 - Nov 2024</span>
+                          </div>
+                          <p className="text-xs text-slate-300 print:text-slate-600 mb-1">Freelance UI Engineering</p>
+                          <p className="text-xs text-slate-400 print:text-slate-500">
+                            Built optimized client interfaces and integrated custom print stylesheets into production sites, reducing print pagination rendering failures to zero.
+                          </p>
                         </div>
-                        <p className="text-xs text-slate-300 print:text-slate-600 mb-1">Freelance UI Engineering</p>
-                        <p className="text-xs text-slate-400 print:text-slate-500">
-                          Built optimized client interfaces and integrated custom print stylesheets into production sites, reducing print pagination rendering failures to zero.
-                        </p>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {projects.length > 0 && (
+                        <div>
+                          <h3 className="text-xl font-bold text-white print:text-slate-900 mb-3 border-b border-white/10 print:border-slate-200 pb-1">
+                            NOTABLE PROJECTS
+                          </h3>
+                          <div className="space-y-4">
+                            {projects.map((proj, idx) => (
+                              <div key={idx} className="relative pl-4 border-l-2 border-white/10 print:border-slate-200">
+                                <div className="flex justify-between items-start mb-0.5 text-sm">
+                                  <h4 className="font-bold text-white print:text-slate-800 flex items-center gap-2">
+                                    {proj.name}
+                                    {proj.repoLink && (
+                                      <a 
+                                        href={proj.repoLink} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        className="text-xs text-[#0ea5e9] hover:underline flex items-center gap-0.5 no-print"
+                                      >
+                                        <span className="text-[10px] font-mono opacity-80">&lt;Code/&gt;</span>
+                                      </a>
+                                    )}
+                                  </h4>
+                                  <span className="text-xs text-slate-400 print:text-slate-500 font-mono">{proj.date}</span>
+                                </div>
+                                {proj.repoLink && (
+                                  <p className="text-[11px] text-[#0ea5e9] print:text-indigo-600 mb-1 font-mono break-all">
+                                    Repo: {proj.repoLink}
+                                  </p>
+                                )}
+                                <p className="text-xs text-slate-400 print:text-slate-500 mt-1 leading-relaxed">
+                                  {proj.description}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {experience.length > 0 && (
+                        <div>
+                          <h3 className="text-xl font-bold text-white print:text-slate-900 mb-3 border-b border-white/10 print:border-slate-200 pb-1">
+                            PROFESSIONAL EXPERIENCE
+                          </h3>
+                          <div className="space-y-4">
+                            {experience.map((exp, idx) => (
+                              <div key={idx} className="relative pl-4 border-l-2 border-white/10 print:border-slate-200">
+                                <div className="flex justify-between items-start mb-0.5 text-sm">
+                                  <h4 className="font-bold text-white print:text-slate-800">{exp.role}</h4>
+                                  <span className="text-xs text-slate-400 print:text-slate-500 font-mono">{exp.duration}</span>
+                                </div>
+                                <p className="text-xs text-slate-300 print:text-slate-650 mb-1 font-medium">{exp.company}</p>
+                                <p className="text-xs text-slate-400 print:text-slate-500 leading-relaxed">
+                                  {exp.description}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Print-only Footer details */}

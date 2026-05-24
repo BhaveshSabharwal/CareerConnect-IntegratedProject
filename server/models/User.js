@@ -28,15 +28,25 @@ const User = sequelize.define('User', {
     type: DataTypes.ENUM('active', 'blocked'),
     defaultValue: 'active',
   },
+  is_active: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+    allowNull: false,
+  },
   company_name: {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  updated_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    defaultValue: DataTypes.NOW,
+  }
 }, {
   tableName: 'users',
   timestamps: true,
   createdAt: 'created_at',
-  updatedAt: false,
+  updatedAt: 'updated_at',
 });
 
 module.exports = User;

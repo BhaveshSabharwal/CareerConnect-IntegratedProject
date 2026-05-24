@@ -20,7 +20,9 @@ router.get('/', verifyToken, async (req, res) => {
         bio: '',
         major: '',
         graduation_year: new Date().getFullYear(),
-        academic_marks: ''
+        academic_marks: '',
+        projects: [],
+        experience: []
       });
       // Re-fetch to get user associations
       profile = await Profile.findOne({
@@ -39,7 +41,7 @@ router.get('/', verifyToken, async (req, res) => {
 router.put('/', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { bio, major, graduation_year, skills, academic_marks, name } = req.body;
+    const { bio, major, graduation_year, skills, academic_marks, name, projects, experience } = req.body;
 
     let profile = await Profile.findOne({ where: { user_id: userId } });
 
@@ -50,7 +52,9 @@ router.put('/', verifyToken, async (req, res) => {
         major,
         graduation_year,
         skills: skills || [],
-        academic_marks
+        academic_marks,
+        projects: projects || [],
+        experience: experience || []
       });
     } else {
       profile.bio = bio !== undefined ? bio : profile.bio;
@@ -58,6 +62,8 @@ router.put('/', verifyToken, async (req, res) => {
       profile.graduation_year = graduation_year !== undefined ? graduation_year : profile.graduation_year;
       profile.skills = skills !== undefined ? skills : profile.skills;
       profile.academic_marks = academic_marks !== undefined ? academic_marks : profile.academic_marks;
+      profile.projects = projects !== undefined ? projects : profile.projects;
+      profile.experience = experience !== undefined ? experience : profile.experience;
       await profile.save();
     }
 

@@ -31,6 +31,14 @@ const Profile = sequelize.define('Profile', {
     type: DataTypes.INTEGER,
     allowNull: true,
   },
+  projects: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+  },
+  experience: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+  },
 }, {
   tableName: 'profiles',
   timestamps: true,

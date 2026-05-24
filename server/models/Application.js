@@ -23,6 +23,11 @@ const Application = sequelize.define('Application', {
     type: DataTypes.ENUM('applied', 'shortlisted', 'rejected', 'interview_scheduled', 'selected'),
     defaultValue: 'applied',
   },
+  current_round: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1,
+    allowNull: false,
+  },
 }, {
   tableName: 'applications',
   timestamps: true,

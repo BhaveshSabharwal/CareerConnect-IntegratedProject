@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const verifyToken = (req, res, next) => {
+const verifyToken = async (req, res, next) => {
   const token = req.headers['authorization']?.split(' ')[1];
   
   if (!token) {
@@ -10,6 +10,13 @@ const verifyToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
     req.user = decoded;
+
+    // Retrieve the user from the database to check if they are active
+    const { User } = require('../models');
+    const user = await User.findByPk(decoded.id);
+    if (!user || user.is_active === false) {
+      return res.status(403).json({ error: 'Access denied. Your account is blocked.' });
+    }
   } catch (err) {
     return res.status(401).json({ error: 'Invalid Token' });
   }

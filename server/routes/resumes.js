@@ -1,6 +1,22 @@
 const express = require('express');
 const { Resume } = require('../models');
 const { verifyToken, isStudent } = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const pdfParse = require('pdf-parse');
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '..', 'public', 'uploads'));
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
+});
+const upload = multer({ storage: storage });
+
 const router = express.Router();
 
 // GET all resumes for the logged-in student
@@ -76,9 +92,22 @@ const analyzeResume = (content, title) => {
 };
 
 // POST add a new resume
-router.post('/', verifyToken, isStudent, async (req, res) => {
+router.post('/', verifyToken, isStudent, upload.single('file'), async (req, res) => {
   try {
-    const { title, file_url, parsed_content } = req.body;
+    const { title } = req.body;
+    let parsed_content = req.body.parsed_content || '';
+    let file_url = req.body.file_url || 'https://example.com/resume.pdf';
+
+    if (req.file) {
+      file_url = `/uploads/${req.file.filename}`;
+      try {
+        const dataBuffer = fs.readFileSync(req.file.path);
+        const data = await pdfParse(dataBuffer);
+        parsed_content = data.text;
+      } catch (err) {
+        console.error('Error parsing PDF:', err);
+      }
+    }
     
     // Analyze resume content to get real score and feedback rather than random numbers
     const analysis = analyzeResume(parsed_content, title);
@@ -86,8 +115,8 @@ router.post('/', verifyToken, isStudent, async (req, res) => {
     const resume = await Resume.create({
       user_id: req.user.id,
       title: title || 'My Resume',
-      file_url: file_url || 'https://example.com/resume.pdf',
-      parsed_content: parsed_content || '',
+      file_url: file_url,
+      parsed_content: parsed_content,
       ai_score: analysis.score,
       ai_feedback: analysis.feedback
     });

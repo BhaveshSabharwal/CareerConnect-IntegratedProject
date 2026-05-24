@@ -1,6 +1,20 @@
 const express = require('express');
 const { Resource, User } = require('../models');
 const { verifyToken, isAdmin } = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '..', 'public', 'uploads'));
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
+});
+const upload = multer({ storage: storage });
+
 const router = express.Router();
 
 // GET all resources
@@ -24,17 +38,20 @@ router.get('/', verifyToken, async (req, res) => {
 });
 
 // POST a resource (Admin only)
-router.post('/', verifyToken, isAdmin, async (req, res) => {
+router.post('/', verifyToken, isAdmin, upload.single('file'), async (req, res) => {
   try {
     const { title, content, type } = req.body;
-    if (!title || !content || !type) {
-      return res.status(400).json({ error: 'Title, content, and type are required' });
+    if (!title || !type) {
+      return res.status(400).json({ error: 'Title and type are required' });
     }
+
+    const file_url = req.file ? `/uploads/${req.file.filename}` : null;
 
     const resource = await Resource.create({
       title,
-      content,
+      content: content || null,
       type,
+      file_url,
       author_id: req.user.id
     });
 

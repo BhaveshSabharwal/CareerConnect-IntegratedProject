@@ -48,11 +48,29 @@ const Job = sequelize.define('Job', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  jd_file_url: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  total_rounds: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1,
+    allowNull: false,
+  },
+  round_types: {
+    type: DataTypes.JSON,
+    allowNull: true,
+  },
+  updated_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    defaultValue: DataTypes.NOW,
+  }
 }, {
   tableName: 'jobs',
   timestamps: true,
   createdAt: 'created_at',
-  updatedAt: false,
+  updatedAt: 'updated_at',
 });
 
 module.exports = Job;

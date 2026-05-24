@@ -9,6 +9,8 @@ const Topbar = () => {
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [seenNotificationIds, setSeenNotificationIds] = useState(null);
+  const [activeBanners, setActiveBanners] = useState([]);
 
   const fetchNotifications = async () => {
     if (!token) return;
@@ -18,6 +20,18 @@ const Topbar = () => {
       });
       if (res.ok) {
         const data = await res.json();
+        
+        // Only trigger banners if seenNotificationIds is already initialized
+        if (seenNotificationIds !== null) {
+          const newNotifs = data.filter(n => !seenNotificationIds.includes(n.id) && !n.is_read);
+          if (newNotifs.length > 0) {
+            newNotifs.forEach(notif => {
+              triggerBanner(notif);
+            });
+          }
+        }
+        
+        setSeenNotificationIds(data.map(n => n.id));
         setNotifications(data);
       }
     } catch (err) {
@@ -25,12 +39,38 @@ const Topbar = () => {
     }
   };
 
+  const triggerBanner = (notif) => {
+    const bannerId = notif.id;
+    setActiveBanners(prev => {
+      const updated = [...prev];
+      if (updated.length >= 5) {
+        updated.shift(); // remove oldest banner if we exceed 5
+      }
+      if (updated.some(b => b.id === bannerId)) return prev;
+      return [...updated, { id: bannerId, title: notif.title, message: notif.message }];
+    });
+
+    // Automatically remove after 3 seconds
+    setTimeout(() => {
+      setActiveBanners(prev => prev.filter(b => b.id !== bannerId));
+    }, 3000);
+  };
+
+  const closeBanner = (bannerId) => {
+    setActiveBanners(prev => prev.filter(b => b.id !== bannerId));
+  };
+
   useEffect(() => {
     if (token && user) {
+      setSeenNotificationIds(null);
+      setActiveBanners([]);
       fetchNotifications();
-      // Poll every 10 seconds to keep in sync
-      const interval = setInterval(fetchNotifications, 10000);
+      // Poll every 3 seconds to keep notifications extremely live
+      const interval = setInterval(fetchNotifications, 3000);
       return () => clearInterval(interval);
+    } else {
+      setSeenNotificationIds(null);
+      setActiveBanners([]);
     }
   }, [token, user]);
 
@@ -177,6 +217,47 @@ const Topbar = () => {
           <Menu size={24} />
         </button>
       </div>
+
+      {/* Floating Notification Banners on the Right */}
+      <div className="fixed top-20 right-4 z-[9999] flex flex-col gap-2 max-w-sm w-full no-print pointer-events-none">
+        {activeBanners.map(banner => (
+          <div 
+            key={banner.id} 
+            className="pointer-events-auto bg-[#0f172a]/95 border border-white/10 hover:border-[#0ea5e9]/30 text-white p-3.5 rounded-xl shadow-2xl backdrop-blur-md transition-all duration-300 flex items-start gap-3 relative overflow-hidden"
+            style={{
+              animation: 'slideIn 0.3s ease-out forwards'
+            }}
+          >
+            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#0ea5e9] to-[#8b5cf6]"></div>
+            <div className="flex-shrink-0 mt-0.5 p-1 rounded-lg bg-white/5 border border-white/10 text-[#0ea5e9]">
+              <Bell size={14} className="animate-bounce" />
+            </div>
+            <div className="flex-1">
+              <h5 className="text-xs font-bold text-white mb-0.5">{banner.title}</h5>
+              <p className="text-[11px] text-slate-350 leading-normal">{banner.message}</p>
+            </div>
+            <button 
+              onClick={() => closeBanner(banner.id)} 
+              className="text-slate-500 hover:text-white transition-colors text-lg font-bold leading-none p-0.5"
+            >
+              &times;
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <style>{`
+        @keyframes slideIn {
+          0% {
+            transform: translateX(120%);
+            opacity: 0;
+          }
+          100% {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </header>
   );
 };

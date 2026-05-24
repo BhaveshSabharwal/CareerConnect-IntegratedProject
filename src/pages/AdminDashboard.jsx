@@ -4,6 +4,7 @@ import GlassCard from '../components/ui/GlassCard';
 import FlatButton from '../components/ui/FlatButton';
 import { useAuth } from '../context/AuthContext';
 import { Tabs } from '../components/ui/Tabs';
+import { useAlert } from '../context/AlertContext';
 
 const AdminDashboard = () => {
   const { token } = useAuth();
@@ -130,26 +131,61 @@ const UserModerationTab = ({ users, token, onRefresh }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const { showAlert, showConfirm } = useAlert();
+
+  // Clear selection if users data updates or filters change
+  useEffect(() => {
+    setSelectedUserIds([]);
+  }, [users, searchQuery, roleFilter, statusFilter]);
 
   const handleToggleStatus = async (userId, currentStatus) => {
     const newStatus = currentStatus === 'active' ? 'blocked' : 'active';
-    if (!window.confirm(`Are you sure you want to change user status to: ${newStatus}?`)) return;
+    showConfirm(`Are you sure you want to change user status to: ${newStatus}?`, async () => {
+        try {
+          const res = await fetch(`http://localhost:5000/api/users/${userId}/status`, {
+            method: 'PUT',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ status: newStatus })
+          });
+          if (res.ok) {
+            onRefresh();
+          }
+        } catch (err) {
+          console.error(err);
+        }
+    });
+  };
+
+  const handleBulkStatusChange = (newStatus) => {
+    if (selectedUserIds.length === 0) return;
     
-    try {
-      const res = await fetch(`http://localhost:5000/api/users/${userId}/status`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
-        },
-        body: JSON.stringify({ status: newStatus })
-      });
-      if (res.ok) {
-        onRefresh();
+    showConfirm(`Change status to '${newStatus}' for ${selectedUserIds.length} users?`, async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/users/bulk/status', {
+          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          },
+          body: JSON.stringify({ userIds: selectedUserIds, status: newStatus })
+        });
+        if (res.ok) {
+          showAlert(`Successfully updated status of ${selectedUserIds.length} users to ${newStatus}.`, 'success');
+          setSelectedUserIds([]);
+          onRefresh();
+        } else {
+          const errorData = await res.json();
+          showAlert(`Error: ${errorData.error || 'Failed to update'}`, 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert('Internal Server Error. Check server console.', 'error');
       }
-    } catch (err) {
-      console.error(err);
-    }
+    });
   };
 
   // Live filtering
@@ -165,51 +201,197 @@ const UserModerationTab = ({ users, token, onRefresh }) => {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  return (
-    <div className="space-y-4">
-      {/* Dynamic Search & Filtration panel */}
-      <GlassCard className="p-4">
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="flex-1 w-full relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Search user name or email..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-black/20 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-xs text-slate-300 focus:outline-none focus:border-[#0ea5e9] transition-colors"
-            />
-          </div>
-          <div className="flex gap-2 w-full md:w-auto">
-            <select 
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="bg-black/20 border border-white/10 text-xs text-slate-400 rounded-lg p-2 focus:outline-none"
-            >
-              <option value="ALL">All Roles</option>
-              <option value="ADMIN">ADMIN</option>
-              <option value="INTERVIEWER">INTERVIEWER</option>
-              <option value="STUDENT">STUDENT</option>
-            </select>
+  // Filter blockable users (cannot block Admins)
+  const blockableUsers = filteredUsers.filter(u => u.role !== 'ADMIN');
 
-            <select 
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-black/20 border border-white/10 text-xs text-slate-400 rounded-lg p-2 focus:outline-none"
+  const handleSelectUser = (userId) => {
+    setSelectedUserIds(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId) 
+        : [...prev, userId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    const blockableIds = blockableUsers.map(u => u.id);
+    const allSelected = blockableIds.every(id => selectedUserIds.includes(id));
+    
+    if (allSelected) {
+      setSelectedUserIds(prev => prev.filter(id => !blockableIds.includes(id)));
+    } else {
+      setSelectedUserIds(prev => Array.from(new Set([...prev, ...blockableIds])));
+    }
+  };
+
+  // Extract unique criteria for selector tools
+  const uniqueGraduationYears = Array.from(new Set(
+    blockableUsers.map(u => u.Profile?.graduation_year).filter(Boolean)
+  )).sort((a, b) => b - a);
+
+  const uniqueEmailDomains = Array.from(new Set(
+    blockableUsers.map(u => u.email.split('@')[1]).filter(Boolean)
+  )).sort();
+
+  const selectByCriteria = (type, value) => {
+    if (!value) return;
+    let targets = [];
+    
+    if (type === 'class') {
+      targets = blockableUsers.filter(u => u.Profile?.graduation_year === parseInt(value));
+    } else if (type === 'domain') {
+      targets = blockableUsers.filter(u => u.email.endsWith(`@${value}`));
+    } else if (type === 'role') {
+      targets = blockableUsers.filter(u => u.role === value);
+    }
+
+    const targetIds = targets.map(u => u.id);
+    setSelectedUserIds(prev => Array.from(new Set([...prev, ...targetIds])));
+  };
+
+  return (
+    <div className="space-y-4 animate-in fade-in duration-200">
+      {/* Search, Filtration, and Selection Criteria panel */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Dynamic Filters */}
+        <div className="lg:col-span-2">
+          <GlassCard className="p-4 h-full flex flex-col justify-center">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+              <div className="flex-1 w-full relative">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input 
+                  type="text" 
+                  placeholder="Search user name or email..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-black/20 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-xs text-slate-300 focus:outline-none focus:border-[#0ea5e9] transition-colors"
+                />
+              </div>
+              <div className="flex gap-2 w-full md:w-auto">
+                <select 
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="bg-black/20 border border-white/10 text-xs text-slate-400 rounded-lg p-2 focus:outline-none cursor-pointer"
+                >
+                  <option value="ALL">All Roles</option>
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="INTERVIEWER">INTERVIEWER</option>
+                  <option value="STUDENT">STUDENT</option>
+                </select>
+
+                <select 
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="bg-black/20 border border-white/10 text-xs text-slate-400 rounded-lg p-2 focus:outline-none cursor-pointer"
+                >
+                  <option value="ALL">All Statuses</option>
+                  <option value="active">Active</option>
+                  <option value="blocked">Blocked</option>
+                </select>
+              </div>
+            </div>
+          </GlassCard>
+        </div>
+
+        {/* Selection Assistant */}
+        <div className="lg:col-span-1">
+          <GlassCard className="p-4 bg-white/5 border border-white/5 h-full">
+            <h4 className="text-[10px] uppercase tracking-wider font-extrabold text-[#0ea5e9] mb-3 flex items-center gap-1.5">
+              <Settings size={13} className="text-[#0ea5e9]" /> Bulk Select Assistant
+            </h4>
+            <div className="grid grid-cols-3 gap-2">
+              <select
+                onChange={(e) => {
+                  selectByCriteria('class', e.target.value);
+                  e.target.value = '';
+                }}
+                defaultValue=""
+                className="bg-black/20 border border-white/10 text-[10px] text-slate-300 rounded-lg p-1.5 focus:outline-none cursor-pointer w-full text-center"
+              >
+                <option value="" disabled>By Class</option>
+                {uniqueGraduationYears.map(yr => (
+                  <option key={yr} value={yr}>Class of {yr}</option>
+                ))}
+              </select>
+
+              <select
+                onChange={(e) => {
+                  selectByCriteria('domain', e.target.value);
+                  e.target.value = '';
+                }}
+                defaultValue=""
+                className="bg-black/20 border border-white/10 text-[10px] text-slate-300 rounded-lg p-1.5 focus:outline-none cursor-pointer w-full text-center"
+              >
+                <option value="" disabled>By Domain</option>
+                {uniqueEmailDomains.map(dom => (
+                  <option key={dom} value={dom}>@{dom}</option>
+                ))}
+              </select>
+
+              <select
+                onChange={(e) => {
+                  selectByCriteria('role', e.target.value);
+                  e.target.value = '';
+                }}
+                defaultValue=""
+                className="bg-black/20 border border-white/10 text-[10px] text-slate-300 rounded-lg p-1.5 focus:outline-none cursor-pointer w-full text-center"
+              >
+                <option value="" disabled>By Role</option>
+                <option value="STUDENT">STUDENT</option>
+                <option value="INTERVIEWER">INTERVIEWER</option>
+              </select>
+            </div>
+          </GlassCard>
+        </div>
+      </div>
+
+      {/* Floating Bulk Actions bar */}
+      {selectedUserIds.length > 0 && (
+        <div className="bg-[#0ea5e9]/10 border border-[#0ea5e9]/30 rounded-xl p-4 flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300 animate-in fade-in slide-in-from-top-4">
+          <div className="flex items-center gap-2.5">
+            <div className="h-6 w-6 bg-[#0ea5e9] text-white text-[11px] font-bold rounded-full flex items-center justify-center font-mono">
+              {selectedUserIds.length}
+            </div>
+            <p className="text-xs text-slate-200 font-semibold">
+              users selected for bulk administration
+            </p>
+          </div>
+          <div className="flex gap-2 w-full md:w-auto justify-end">
+            <button
+              onClick={() => setSelectedUserIds([])}
+              className="text-[10px] uppercase font-bold text-slate-400 hover:text-white px-3 py-1.5 border border-white/10 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
             >
-              <option value="ALL">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="blocked">Blocked</option>
-            </select>
+              Clear Selection
+            </button>
+            <button
+              onClick={() => handleBulkStatusChange('active')}
+              className="text-[10px] uppercase font-bold bg-[#10b981] hover:bg-[#059669] text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <CheckCircle size={12} /> Bulk Unblock
+            </button>
+            <button
+              onClick={() => handleBulkStatusChange('blocked')}
+              className="text-[10px] uppercase font-bold bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <ShieldAlert size={12} /> Bulk Block
+            </button>
           </div>
         </div>
-      </GlassCard>
+      )}
 
+      {/* Main Table Repository */}
       <GlassCard className="overflow-hidden p-0 border border-white/5">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-400">
             <thead className="bg-black/30 text-[10px] uppercase font-semibold text-slate-300">
               <tr>
+                <th className="px-6 py-4 w-12 text-center">
+                  <input 
+                    type="checkbox"
+                    checked={blockableUsers.length > 0 && blockableUsers.every(u => selectedUserIds.includes(u.id))}
+                    onChange={handleSelectAll}
+                    className="h-3.5 w-3.5 accent-[#0ea5e9] bg-black/30 border border-white/10 rounded focus:ring-0 focus:outline-none cursor-pointer"
+                  />
+                </th>
                 <th className="px-6 py-4">Name & Email</th>
                 <th className="px-6 py-4">Role Tag</th>
                 <th className="px-6 py-4">Platform Status</th>
@@ -217,42 +399,76 @@ const UserModerationTab = ({ users, token, onRefresh }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {filteredUsers.length > 0 ? filteredUsers.map(user => (
-                <tr key={user.id} className="hover:bg-white/5 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="font-bold text-white text-xs">{user.name}</div>
-                    <div className="text-[10px] font-mono text-slate-500">{user.email}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
-                      user.role === 'ADMIN' ? 'bg-red-500/20 text-red-400 border border-red-500/10' :
-                      user.role === 'INTERVIEWER' ? 'bg-[#0ea5e9]/20 text-[#0ea5e9] border border-[#0ea5e9]/10' :
-                      'bg-[#8b5cf6]/20 text-[#8b5cf6] border border-[#8b5cf6]/10'
-                    }`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    {user.status === 'blocked' ? (
-                      <span className="flex items-center gap-1 text-red-500 font-bold"><ShieldAlert size={12} /> Blocked</span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-[#10b981] font-bold"><CheckCircle size={12} /> Active</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    {user.role !== 'ADMIN' && (
-                      <button 
-                        onClick={() => handleToggleStatus(user.id, user.status)}
-                        className={`text-[10px] font-bold hover:underline ${user.status === 'active' ? 'text-red-400' : 'text-[#10b981]'}`}
-                      >
-                        {user.status === 'active' ? 'Restrict Profile' : 'Restore Profile'}
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              )) : (
+              {filteredUsers.length > 0 ? filteredUsers.map(user => {
+                const isSelected = selectedUserIds.includes(user.id);
+                return (
+                  <tr 
+                    key={user.id} 
+                    className={`transition-colors duration-150 ${
+                      isSelected 
+                        ? 'bg-[#0ea5e9]/5 hover:bg-[#0ea5e9]/10 border-l-2 border-[#0ea5e9]' 
+                        : 'hover:bg-white/5'
+                    }`}
+                  >
+                    <td className="px-6 py-4 text-center">
+                      {user.role !== 'ADMIN' ? (
+                        <input 
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleSelectUser(user.id)}
+                          className="h-3.5 w-3.5 accent-[#0ea5e9] bg-black/30 border border-white/10 rounded focus:ring-0 focus:outline-none cursor-pointer"
+                        />
+                      ) : (
+                        <span className="text-slate-600 text-[10px]">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="font-bold text-white text-xs">{user.name}</div>
+                        {user.Profile?.graduation_year && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-black/40 text-slate-400 border border-white/5">
+                            Class of {user.Profile.graduation_year}
+                          </span>
+                        )}
+                        {user.Profile?.major && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-black/40 text-slate-400 border border-white/5">
+                            {user.Profile.major}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] font-mono text-slate-500 mt-0.5">{user.email}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
+                        user.role === 'ADMIN' ? 'bg-red-500/20 text-red-400 border border-red-500/10' :
+                        user.role === 'INTERVIEWER' ? 'bg-[#0ea5e9]/20 text-[#0ea5e9] border border-[#0ea5e9]/10' :
+                        'bg-[#8b5cf6]/20 text-[#8b5cf6] border border-[#8b5cf6]/10'
+                      }`}>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {user.is_active === false || user.status === 'blocked' ? (
+                        <span className="flex items-center gap-1 text-red-500 font-bold"><ShieldAlert size={12} /> Blocked</span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[#10b981] font-bold"><CheckCircle size={12} /> Active</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      {user.role !== 'ADMIN' && (
+                        <button 
+                          onClick={() => handleToggleStatus(user.id, user.is_active ? 'active' : 'blocked')}
+                          className={`text-[10px] font-bold hover:underline cursor-pointer ${user.is_active ? 'text-red-400 font-bold' : 'text-[#10b981] font-bold'}`}
+                        >
+                          {user.is_active ? 'Restrict Profile' : 'Restore Profile'}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              }) : (
                 <tr>
-                  <td colSpan="4" className="text-center py-8 text-slate-500 italic">No matching user records.</td>
+                  <td colSpan="5" className="text-center py-8 text-slate-500 italic">No matching user records.</td>
                 </tr>
               )}
             </tbody>
@@ -267,7 +483,9 @@ const UserModerationTab = ({ users, token, onRefresh }) => {
 const ResourcesManagementTab = ({ token }) => {
   const [resources, setResources] = useState([]);
   const [formData, setFormData] = useState({ title: '', content: '', type: 'career_guidance' });
+  const [selectedFile, setSelectedFile] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const { showAlert, showConfirm } = useAlert();
 
   const fetchResources = async () => {
     try {
@@ -277,6 +495,7 @@ const ResourcesManagementTab = ({ token }) => {
       if (res.ok) setResources(await res.json());
     } catch (err) {
       console.error(err);
+      showAlert('Failed to fetch resources', 'error');
     }
   };
 
@@ -290,23 +509,43 @@ const ResourcesManagementTab = ({ token }) => {
       const url = editingId ? `http://localhost:5000/api/resources/${editingId}` : 'http://localhost:5000/api/resources';
       const method = editingId ? 'PUT' : 'POST';
 
+      let body;
+      let headers = {
+        'Authorization': `Bearer ${token}`
+      };
+
+      if (!editingId) {
+        body = new FormData();
+        body.append('title', formData.title);
+        body.append('content', formData.content);
+        body.append('type', formData.type);
+        if (selectedFile) {
+          body.append('file', selectedFile);
+        }
+      } else {
+        headers['Content-Type'] = 'application/json';
+        body = JSON.stringify(formData);
+      }
+
       const res = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
+        headers,
+        body
       });
 
       if (res.ok) {
         setFormData({ title: '', content: '', type: 'career_guidance' });
+        setSelectedFile(null);
+        if (document.getElementById('resourceFile')) document.getElementById('resourceFile').value = '';
         setEditingId(null);
         fetchResources();
-        alert('Resource successfully saved.');
+        showAlert('Resource successfully saved.', 'success');
+      } else {
+        showAlert('Failed to save resource.', 'error');
       }
     } catch (err) {
       console.error(err);
+      showAlert('Error connecting to server.', 'error');
     }
   };
 
@@ -315,19 +554,24 @@ const ResourcesManagementTab = ({ token }) => {
     setFormData({ title: res.title, content: res.content, type: res.type });
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this resource permanently?')) return;
-    try {
-      const res = await fetch(`http://localhost:5000/api/resources/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        fetchResources();
+  const handleDelete = (id) => {
+    showConfirm('Delete this resource permanently?', async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/resources/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          fetchResources();
+          showAlert('Resource deleted.', 'success');
+        } else {
+          showAlert('Failed to delete resource.', 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert('Error connecting to server.', 'error');
       }
-    } catch (err) {
-      console.error(err);
-    }
+    });
   };
 
   return (
@@ -354,8 +598,15 @@ const ResourcesManagementTab = ({ token }) => {
 
             <div>
               <label className="block text-[10px] text-slate-400 mb-1">Body Material Content</label>
-              <textarea required rows={6} placeholder="Detailed text resources, advice guidelines..." value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded p-2 text-xs text-slate-200 resize-none leading-relaxed" />
+              <textarea required={!selectedFile && !editingId} rows={4} placeholder="Detailed text resources, advice guidelines..." value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded p-2 text-xs text-slate-200 resize-none leading-relaxed" />
             </div>
+
+            {!editingId && (
+              <div>
+                <label className="block text-[10px] text-slate-400 mb-1">Attach File (Optional PDF/DOCX)</label>
+                <input id="resourceFile" type="file" onChange={e => setSelectedFile(e.target.files[0])} className="w-full bg-black/20 border border-white/10 rounded p-2 text-xs text-slate-400 focus:outline-none" />
+              </div>
+            )}
 
             <div className="flex gap-2 justify-end">
               {editingId && <button type="button" onClick={() => { setEditingId(null); setFormData({title:'', content:'', type:'career_guidance'}); }} className="text-xs text-slate-400 hover:text-white px-2">Cancel</button>}
@@ -382,6 +633,11 @@ const ResourcesManagementTab = ({ token }) => {
                     {r.type.replace('_', ' ')}
                   </span>
                   <p className="text-[11px] text-slate-400 leading-relaxed mt-2 line-clamp-3">{r.content}</p>
+                  {r.file_url && (
+                    <a href={`http://localhost:5000${r.file_url}`} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#10b981] hover:underline mt-2 inline-block font-bold">
+                      View Attached File
+                    </a>
+                  )}
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
                   <button onClick={() => handleEdit(r)} className="text-slate-400 hover:text-[#0ea5e9] p-1 transition-colors"><Edit3 size={13} /></button>
