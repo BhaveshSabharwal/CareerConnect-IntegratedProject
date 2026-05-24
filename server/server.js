@@ -25,8 +25,12 @@ app.use(express.json());
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, 'public', 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (error) {
+  console.log('[Server] Skipping uploads directory creation (Serverless environment detected).');
 }
 
 // Serve static files from the uploads directory

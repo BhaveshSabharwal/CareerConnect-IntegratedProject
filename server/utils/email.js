@@ -8,8 +8,12 @@ const logFilePath = path.join(__dirname, '../logs/emails.log');
 
 // Ensure log directory exists
 const logDir = path.dirname(logFilePath);
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
+try {
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+} catch (error) {
+  console.log('[Email Logger] Skipping log directory creation (Serverless environment detected).');
 }
 
 let transporter;
@@ -64,8 +68,12 @@ Body Preview:
 ${html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300)}...
 ========================================================================
 `;
-      fs.appendFileSync(logFilePath, logEntry, 'utf8');
-      console.log(`[Email Mock Transporter] Logged email to ${to} for offline testing.`);
+      try {
+        fs.appendFileSync(logFilePath, logEntry, 'utf8');
+        console.log(`[Email Mock Transporter] Logged email to ${to} for offline testing.`);
+      } catch (e) {
+        console.log(`[Email Mock Transporter] Mock email to ${to} generated but skipped logging to disk (Serverless).`);
+      }
     } else {
       console.log(`[Email Transporter] Real email successfully sent via Gmail to ${to}. Message ID: ${info.messageId}`);
     }
