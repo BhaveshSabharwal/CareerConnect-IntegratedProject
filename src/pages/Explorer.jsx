@@ -54,8 +54,8 @@ const Explorer = () => {
 
   const companies = {};
   jobs.forEach(j => {
-    if (j.interviewer && j.interviewer.company_name) {
-      const c = j.interviewer.company_name;
+    if (j.company) {
+      const c = j.company;
       companies[c] = (companies[c] || 0) + 1;
     }
   });

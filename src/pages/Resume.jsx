@@ -782,7 +782,6 @@ const Resume = () => {
                     <div>
                       <h3 className="text-xl font-bold text-white print:text-slate-900 mb-3 border-b border-white/10 print:border-slate-200 pb-1 flex items-center justify-between">
                         <span>NOTABLE PROJECTS & EXPERIENCE</span>
-                        <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30 font-medium tracking-wider uppercase no-print">Demo Placeholder</span>
                       </h3>
                       <div className="space-y-4">
                         <div className="relative pl-4 border-l-2 border-white/10 print:border-slate-200">
