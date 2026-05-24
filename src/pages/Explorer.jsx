@@ -52,6 +52,18 @@ const Explorer = () => {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6);
 
+  const companies = {};
+  jobs.forEach(j => {
+    if (j.interviewer && j.interviewer.company_name) {
+      const c = j.interviewer.company_name;
+      companies[c] = (companies[c] || 0) + 1;
+    }
+  });
+  
+  const featuredRecruiters = Object.entries(companies)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4);
+
   const colors = ['#0ea5e9', '#10b981', '#8b5cf6', '#a855f7', '#f43f5e', '#eab308'];
 
   return (
@@ -112,15 +124,31 @@ const Explorer = () => {
           <h2 className="text-lg font-bold text-white flex items-center gap-2 mt-8">
             <Star className="text-yellow-500" size={18} /> Featured Campus Recruiters
           </h2>
-          <GlassCard className="relative overflow-hidden">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h4 className="text-sm font-bold text-white">Interactive Partner Discovery Feed</h4>
-                <p className="text-xs text-slate-400 mt-1">Campus recruiting partners are automatically catalogued here during active hiring campaigns.</p>
-              </div>
-              <span className="text-[9px] px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 font-mono">STANDBY MODE</span>
+          {featuredRecruiters.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {featuredRecruiters.map(([company, count], idx) => (
+                <GlassCard key={company} className="relative overflow-hidden hover:-translate-y-1 transition-transform border border-white/5">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white bg-gradient-to-br ${
+                      idx % 3 === 0 ? 'from-blue-500 to-cyan-500' :
+                      idx % 3 === 1 ? 'from-purple-500 to-pink-500' :
+                      'from-green-500 to-emerald-500'
+                    }`}>
+                      {company.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-white">{company}</h4>
+                      <p className="text-xs text-slate-400">{count} Active Listing{count !== 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
+                </GlassCard>
+              ))}
             </div>
-          </GlassCard>
+          ) : (
+            <GlassCard className="py-8 border border-dashed border-white/10 text-center text-slate-500 text-xs italic">
+              No active campus recruiters catalogued at the moment.
+            </GlassCard>
+          )}
         </div>
 
         {/* Live Trending Tags sidebar */}

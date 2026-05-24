@@ -19,7 +19,8 @@ const Resume = () => {
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [bio, setBio] = useState('');
-  const [major, setMajor] = useState('');
+  const [university, setUniversity] = useState('');
+  const [course, setCourse] = useState('');
   const [graduationYear, setGraduationYear] = useState('');
   const [academicMarks, setAcademicMarks] = useState('');
   const [projects, setProjects] = useState([]);
@@ -54,7 +55,8 @@ const Resume = () => {
       if (res.ok) {
         const data = await res.json();
         setBio(data.bio || '');
-        setMajor(data.major || '');
+        setUniversity(data.university || '');
+        setCourse(data.course || '');
         setGraduationYear(data.graduation_year || '');
         setAcademicMarks(data.academic_marks || '');
         setSkills(data.skills || []);
@@ -64,7 +66,7 @@ const Resume = () => {
           name: data.User?.name || user?.name || '',
           email: data.User?.email || user?.email || '',
           role: user?.role === 'STUDENT' ? 'Student / Graduate' : user?.role || '',
-          location: data.major ? `${data.major} Major` : 'Remote'
+          location: data.university ? data.university : 'Remote'
         });
       }
     } catch (err) {
@@ -106,7 +108,8 @@ const Resume = () => {
         },
         body: JSON.stringify({
           bio,
-          major,
+          university,
+          course,
           graduation_year: parseInt(graduationYear) || undefined,
           academic_marks: academicMarks,
           name: profileData.name,
@@ -151,7 +154,7 @@ const Resume = () => {
 
       const formData = new FormData();
       formData.append('title', newResumeTitle);
-      formData.append('parsed_content', resumeTextContent || `Highly competent developer skilled in ${skills.join(', ')}. Academic focus on ${major}. Graduation year ${graduationYear}.`);
+      formData.append('parsed_content', resumeTextContent || `Highly competent developer skilled in ${skills.join(', ')}. Pursuing ${course} at ${university}. Graduation year ${graduationYear}.`);
       if (selectedResumeFile) {
         formData.append('file', selectedResumeFile);
       } else {
@@ -312,17 +315,23 @@ const Resume = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-[10px] text-slate-400 block mb-1">Academic Major</label>
-                        <input type="text" placeholder="Computer Science" value={major} onChange={e => setMajor(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded px-2 py-1.5 text-white text-xs focus:outline-none focus:border-[#0ea5e9]" />
+                        <label className="text-[10px] text-slate-400 block mb-1">University / College Name</label>
+                        <input type="text" placeholder="Stanford University" value={university} onChange={e => setUniversity(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded px-2 py-1.5 text-white text-xs focus:outline-none focus:border-[#0ea5e9]" />
                       </div>
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-1">Exact Course Pursuing</label>
+                        <input type="text" placeholder="B.S. in Computer Science" value={course} onChange={e => setCourse(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded px-2 py-1.5 text-white text-xs focus:outline-none focus:border-[#0ea5e9]" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="text-[10px] text-slate-400 block mb-1">Graduation Year</label>
                         <input type="number" placeholder="2026" value={graduationYear} onChange={e => setGraduationYear(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded px-2 py-1.5 text-white text-xs focus:outline-none focus:border-[#0ea5e9]" />
                       </div>
-                    </div>
-                    <div>
-                      <label className="text-[10px] text-slate-400 block mb-1">Academic Marks / GPA</label>
-                      <input type="text" placeholder="GPA: 3.8/4.0 or 85%" value={academicMarks} onChange={e => setAcademicMarks(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-[#0ea5e9] transition-colors" />
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-1">Academic Marks / GPA</label>
+                        <input type="text" placeholder="GPA: 3.8/4.0 or 85%" value={academicMarks} onChange={e => setAcademicMarks(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-[#0ea5e9] transition-colors" />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -489,7 +498,7 @@ const Resume = () => {
                 <p className="text-[#0ea5e9] text-sm font-medium mb-3">{profileData.role}</p>
                 <div className="text-xs text-slate-400 space-y-1 mb-4 text-left border-t border-white/5 pt-3">
                   <p className="flex items-center gap-1.5"><User size={13} className="text-slate-500" /> {profileData.email}</p>
-                  {major && <p className="flex items-center gap-1.5"><GraduationCap size={13} className="text-slate-500" /> {major} Major ({graduationYear})</p>}
+                  {(university || course) && <p className="flex items-center gap-1.5"><GraduationCap size={13} className="text-slate-500" /> {course} at {university} ({graduationYear})</p>}
                   {academicMarks && <p className="flex items-center gap-1.5"><BookOpen size={13} className="text-slate-500" /> {academicMarks}</p>}
                 </div>
                 {bio && <p className="text-xs text-slate-300 bg-white/5 p-3 rounded-lg border border-white/5 italic text-left">{bio}</p>}
@@ -719,7 +728,7 @@ const Resume = () => {
                     </div>
                     <div className="text-right text-xs text-slate-500">
                       <p>{profileData.email}</p>
-                      {major && <p>{major} • Class of {graduationYear}</p>}
+                      {(university || course) && <p>{course} at {university} • Class of {graduationYear}</p>}
                     </div>
                   </div>
                 </div>
@@ -736,15 +745,15 @@ const Resume = () => {
                     </p>
                   </div>
 
-                  {major && (
-                    <div>
+                  {(university || course) && (
+                    <div className="mb-2">
                       <h3 className="text-xl font-bold text-white print:text-slate-900 mb-2 border-b border-white/10 print:border-slate-200 pb-1">
                         EDUCATION HISTORY
                       </h3>
-                      <div className="flex justify-between items-start text-sm">
+                      <div className="flex justify-between items-start mb-0.5">
                         <div>
-                          <h4 className="font-bold text-white print:text-slate-800">{major} Major Degree</h4>
-                          <p className="text-xs text-slate-400 print:text-slate-500">Active University Coursework</p>
+                          <h4 className="font-bold text-white print:text-slate-800">{course}</h4>
+                          <div className="text-xs text-slate-400 print:text-slate-500">{university}</div>
                         </div>
                         <div className="text-right">
                           <p className="text-white print:text-slate-800 font-medium">Class of {graduationYear}</p>

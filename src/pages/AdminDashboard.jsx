@@ -430,9 +430,14 @@ const UserModerationTab = ({ users, token, onRefresh }) => {
                             Class of {user.Profile.graduation_year}
                           </span>
                         )}
-                        {user.Profile?.major && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-black/40 text-slate-400 border border-white/5">
-                            {user.Profile.major}
+                        {user.Profile?.course && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-black/40 text-[#0ea5e9] border border-[#0ea5e9]/20 truncate max-w-[120px]">
+                            {user.Profile.course}
+                          </span>
+                        )}
+                        {user.Profile?.university && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-black/40 text-slate-400 border border-white/5 truncate max-w-[150px]">
+                            {user.Profile.university}
                           </span>
                         )}
                       </div>
@@ -706,7 +711,7 @@ const SystemMaintenanceTab = ({ token }) => {
         const result = await res.json();
         setCacheResult(result);
         fetchMetrics();
-        alert('Redis simulated performance cache flushed.');
+        alert(`Redis performance cache flushed. ${result.keys_cleared || 0} keys cleared.`);
       }
     } catch (err) {
       console.error(err);
