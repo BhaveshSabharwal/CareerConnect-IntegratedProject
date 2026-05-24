@@ -7,7 +7,7 @@ const fs = require('fs');
 
 // Vercel Serverless Polyfill for pdf-parse
 if (typeof DOMMatrix === 'undefined') {
-  global.DOMMatrix = class DOMMatrix {};
+  global.DOMMatrix = class DOMMatrix { };
 }
 const pdfParse = require('pdf-parse');
 
@@ -40,11 +40,11 @@ router.get('/', verifyToken, isStudent, async (req, res) => {
 // Helper to perform resume parsing & technical feedback matching
 const analyzeResume = (content, title) => {
   const text = ((content || '') + ' ' + (title || '')).toLowerCase();
-  
+
   let score = 40; // Base score
   const matchedStrengths = [];
   const missingImprovements = [];
-  
+
   // 1. Length & Word Count Check (Max +10)
   const wordCount = text.split(/\s+/).filter(w => w).length;
   if (wordCount > 200 && wordCount < 1000) {
@@ -146,10 +146,10 @@ router.post('/', verifyToken, isStudent, upload.single('file'), async (req, res)
         console.error('Error parsing PDF:', err);
       }
     }
-    
+
     // Analyze resume content to get real score and feedback rather than random numbers
     const analysis = analyzeResume(parsed_content, title);
-    
+
     const resume = await Resume.create({
       user_id: req.user.id,
       title: title || 'My Resume',
@@ -158,7 +158,7 @@ router.post('/', verifyToken, isStudent, upload.single('file'), async (req, res)
       ai_score: analysis.score,
       ai_feedback: analysis.feedback
     });
-    
+
     res.status(201).json(resume);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -171,9 +171,9 @@ router.delete('/:id', verifyToken, isStudent, async (req, res) => {
     const resume = await Resume.findOne({
       where: { id: req.params.id, user_id: req.user.id }
     });
-    
+
     if (!resume) return res.status(404).json({ error: 'Resume not found' });
-    
+
     await resume.destroy();
     res.json({ success: true, message: 'Resume deleted' });
   } catch (error) {
