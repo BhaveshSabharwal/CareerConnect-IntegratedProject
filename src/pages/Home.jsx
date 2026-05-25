@@ -8,7 +8,7 @@ const Home = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="w-full bg-[#020617] text-white overflow-hidden">
+    <div className="w-full bg-white dark:bg-[#020617] text-slate-900 dark:text-white overflow-hidden transition-colors duration-200">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[120%] h-[120%] bg-[radial-gradient(ellipse_at_top_left,_rgba(59,130,246,0.05),transparent_50%)]"></div>
@@ -41,7 +41,7 @@ const Home = () => {
               </span>
             </h1>
 
-            <p className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
               Discover your ideal path, craft standout resumes, and land your dream job with a single, intelligent platform designed for your growth.
             </p>
 
@@ -49,8 +49,8 @@ const Home = () => {
               <FlatButton onClick={() => navigate('/auth')} className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white border-none rounded-xl text-lg shadow-xl shadow-blue-500/25">
                 Start Your Journey <ArrowRight size={20} />
               </FlatButton>
-              <button onClick={() => navigate('/explorer')} className="px-8 py-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all text-lg font-medium text-white flex items-center gap-2">
-                Explore Careers <ArrowRight size={20} className="text-white/50" />
+              <button onClick={() => navigate('/explorer')} className="px-8 py-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 transition-all text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                Explore Careers <ArrowRight size={20} className="text-slate-400 dark:text-white/50" />
               </button>
             </div>
           </motion.div>
@@ -61,7 +61,7 @@ const Home = () => {
           <div className="container mx-auto">
             <div className="text-center mb-20">
               <h2 className="text-4xl md:text-5xl font-bold mb-6">Find Job Opportunities with Ease</h2>
-              <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+              <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto">
                 Join CareerConnect and start your journey towards a successful career.
               </p>
             </div>
@@ -96,14 +96,14 @@ const Home = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-32 px-4 border-t border-white/5">
+        <section className="py-32 px-4 border-t border-slate-200 dark:border-white/5">
           <div className="container mx-auto text-center">
             <h2 className="text-4xl md:text-6xl font-bold mb-8">Take Control of Your Career Today</h2>
-            <p className="text-slate-400 text-xl mb-12 max-w-2xl mx-auto">
+            <p className="text-slate-600 dark:text-slate-400 text-xl mb-12 max-w-2xl mx-auto">
               Join CareerConnect and start your journey towards a successful career.
             </p>
-            <FlatButton onClick={() => navigate('/auth')} className="flex flex-col sm:flex-row items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-none rounded-2xl text-xl font-bold shadow-2xl shadow-blue-500/40 ">
-              Get Started For Free <ArrowRight size={24} />
+            <FlatButton onClick={() => navigate('/auth')} className="mx-auto w-fit flex flex-col sm:flex-row items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-none rounded-2xl text-xl font-bold shadow-2xl shadow-blue-500/40 px-8 py-4">
+              Get Started For Free <ArrowRight size={24} className="ml-2" />
             </FlatButton>
           </div>
         </section>
@@ -115,18 +115,18 @@ const Home = () => {
 const FeatureCard = ({ icon: Icon, stat, title, description }) => (
   <motion.div
     whileHover={{ y: -5 }}
-    className="p-8 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-all group"
+    className="p-8 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10 transition-all group"
   >
     <div className="flex items-start gap-4 mb-6">
       <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-[#0ea5e9] group-hover:bg-blue-500/20 transition-colors">
         <Icon size={24} />
       </div>
       <div>
-        <div className="text-2xl font-bold text-white leading-none mb-1">{stat}</div>
-        <div className="text-slate-300 font-medium">{title}</div>
+        <div className="text-2xl font-bold text-slate-900 dark:text-white leading-none mb-1">{stat}</div>
+        <div className="text-slate-700 dark:text-slate-300 font-medium">{title}</div>
       </div>
     </div>
-    <p className="text-slate-400 leading-relaxed text-sm">
+    <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
       {description}
     </p>
   </motion.div>

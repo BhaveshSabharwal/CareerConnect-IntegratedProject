@@ -92,7 +92,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#020617] relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden transition-colors duration-200">
       {/* Background blobs */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -103,16 +103,16 @@ const Auth = () => {
             <div className="w-12 h-12 mx-auto rounded-xl bg-gradient-to-br from-[#0ea5e9] to-[#8b5cf6] flex items-center justify-center mb-4">
               <Briefcase size={24} className="text-white" />
             </div>
-            <h2 className="text-3xl font-bold text-white mb-2">
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
               {isForgotPassword ? 'Reset Password' : (isLogin ? 'Welcome Back' : 'Create Account')}
             </h2>
-            <p className="text-slate-400">
+            <p className="text-slate-600 dark:text-slate-400">
               {isForgotPassword ? 'Follow the steps to recover your account' : (isLogin ? 'Sign in to access your dashboard' : 'Join CareerConnect today')}
             </p>
           </div>
 
           {error && (
-            <div className={`p-3 mb-6 rounded-lg text-sm text-center border ${error.includes('successful') ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+            <div className={`p-3 mb-6 rounded-lg text-sm text-center border ${error.includes('successful') ? 'bg-green-100 border-green-200 text-green-700 dark:bg-green-500/10 dark:border-green-500/20 dark:text-green-400' : 'bg-red-100 border-red-200 text-red-700 dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400'}`}>
               {error}
             </div>
           )}
@@ -128,7 +128,7 @@ const Auth = () => {
                     required
                     value={forgotEmail}
                     onChange={e => setForgotEmail(e.target.value)}
-                    className="w-full bg-black/20 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:border-[#0ea5e9] transition-colors"
+                    className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg pl-10 pr-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-[#0ea5e9] transition-colors"
                   />
                 </div>
               ) : (
@@ -141,7 +141,7 @@ const Auth = () => {
                       required
                       value={otp}
                       onChange={e => setOtp(e.target.value)}
-                      className="w-full bg-black/20 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:border-[#0ea5e9] transition-colors tracking-[0.2em]"
+                      className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg pl-10 pr-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-[#0ea5e9] transition-colors tracking-[0.2em]"
                     />
                   </div>
                   <div className="relative">
@@ -152,12 +152,12 @@ const Auth = () => {
                       required
                       value={newPassword}
                       onChange={e => setNewPassword(e.target.value)}
-                      className="w-full bg-black/20 border border-white/10 rounded-lg pl-10 pr-10 py-3 text-white focus:outline-none focus:border-[#0ea5e9] transition-colors"
+                      className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg pl-10 pr-10 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-[#0ea5e9] transition-colors"
                     />
                     <button 
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white focus:outline-none"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white focus:outline-none"
                     >
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
@@ -176,7 +176,7 @@ const Auth = () => {
                 <button 
                   type="button"
                   onClick={() => { setIsForgotPassword(false); setError(''); setForgotStep(1); }}
-                  className="text-xs text-slate-400 hover:text-white transition-colors"
+                  className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                   Back to Login
                 </button>
@@ -194,7 +194,7 @@ const Auth = () => {
                       required
                       value={formData.name}
                       onChange={e => setFormData({...formData, name: e.target.value})}
-                      className="w-full bg-black/20 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:border-[#0ea5e9] transition-colors"
+                      className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg pl-10 pr-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-[#0ea5e9] transition-colors"
                     />
                   </div>
                   <div className="relative">
@@ -202,11 +202,11 @@ const Auth = () => {
                     <select 
                       value={formData.role}
                       onChange={e => setFormData({...formData, role: e.target.value})}
-                      className="w-full bg-black/20 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:border-[#0ea5e9] transition-colors appearance-none"
+                      className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg pl-10 pr-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-[#0ea5e9] transition-colors appearance-none"
                     >
-                      <option value="STUDENT" className="bg-[#020617]">Student</option>
-                      <option value="INTERVIEWER" className="bg-[#020617]">Interviewer</option>
-                      <option value="ADMIN" className="bg-[#020617]">Admin</option>
+                      <option value="STUDENT" className="bg-white dark:bg-[#020617] text-slate-900 dark:text-white">Student</option>
+                      <option value="INTERVIEWER" className="bg-white dark:bg-[#020617] text-slate-900 dark:text-white">Interviewer</option>
+                      <option value="ADMIN" className="bg-white dark:bg-[#020617] text-slate-900 dark:text-white">Admin</option>
                     </select>
                   </div>
                 </>
@@ -219,7 +219,7 @@ const Auth = () => {
                   required
                   value={formData.email}
                   onChange={e => setFormData({...formData, email: e.target.value})}
-                  className="w-full bg-black/20 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:border-[#0ea5e9] transition-colors"
+                  className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg pl-10 pr-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-[#0ea5e9] transition-colors"
                 />
               </div>
               <div className="relative">
@@ -230,12 +230,12 @@ const Auth = () => {
                   required
                   value={formData.password}
                   onChange={e => setFormData({...formData, password: e.target.value})}
-                  className="w-full bg-black/20 border border-white/10 rounded-lg pl-10 pr-10 py-3 text-white focus:outline-none focus:border-[#0ea5e9] transition-colors"
+                  className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg pl-10 pr-10 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-[#0ea5e9] transition-colors"
                 />
                 <button 
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white focus:outline-none"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white focus:outline-none"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -264,7 +264,7 @@ const Auth = () => {
           )}
 
           {!isForgotPassword && (
-            <div className="mt-6 text-center text-sm text-slate-400">
+            <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
               {isLogin ? "Don't have an account? " : "Already have an account? "}
               <button 
                 onClick={() => { 

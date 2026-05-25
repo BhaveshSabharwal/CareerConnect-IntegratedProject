@@ -91,37 +91,37 @@ const Jobs = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-2"><Briefcase className="text-[#0ea5e9]" /> Job Opportunities</h1>
-        <p className="text-slate-400">Find your next role matched to your skills and preferences.</p>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2"><Briefcase className="text-[#0ea5e9]" /> Job Opportunities</h1>
+        <p className="text-slate-600 dark:text-slate-400">Find your next role matched to your skills and preferences.</p>
       </div>
 
       {/* Interactive Connected Search Panel */}
       <GlassCard className="mb-8 p-4">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" size={18} />
             <input 
               type="text" 
               placeholder="Search by job title, skill, or company name..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-black/20 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-[#0ea5e9] transition-colors"
+              className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:border-[#0ea5e9] transition-colors"
             />
             {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">&times;</button>
+              <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">&times;</button>
             )}
           </div>
           <div className="relative md:w-64">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" size={18} />
             <input 
               type="text" 
               placeholder="Filter by location..." 
               value={locationQuery}
               onChange={(e) => setLocationQuery(e.target.value)}
-              className="w-full bg-black/20 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-[#0ea5e9] transition-colors"
+              className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:border-[#0ea5e9] transition-colors"
             />
             {locationQuery && (
-              <button onClick={() => setLocationQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">&times;</button>
+              <button onClick={() => setLocationQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">&times;</button>
             )}
           </div>
         </div>
@@ -130,15 +130,15 @@ const Jobs = () => {
       {/* Jobs Listing */}
       <div className="grid grid-cols-1 gap-4">
         {loading ? (
-          <p className="text-slate-400 text-center py-12 text-sm italic">Loading job postings...</p>
+          <p className="text-slate-600 dark:text-slate-400 text-center py-12 text-sm italic">Loading job postings...</p>
         ) : filteredJobs.length === 0 ? (
           <p className="text-slate-500 text-center py-12 text-sm italic">No matching job listings found.</p>
         ) : filteredJobs.map(job => (
-          <GlassCard key={job.id} className="hover:border-white/15 transition-all duration-300">
+          <GlassCard key={job.id} className="hover:border-slate-300 dark:hover:border-white/15 transition-all duration-300">
             <div className="flex flex-col md:flex-row justify-between gap-4">
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-white mb-2">{job.title}</h3>
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 mb-3">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{job.title}</h3>
+                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600 dark:text-slate-400 mb-3">
                   <span className="flex items-center gap-1.5"><Building size={14} /> {job.company}</span>
                   <span className="flex items-center gap-1.5"><MapPin size={14} /> {job.location}</span>
                   <span className="flex items-center gap-1.5"><Clock size={14} /> {job.type}</span>
@@ -147,7 +147,7 @@ const Jobs = () => {
                 
                 <div className="flex flex-wrap gap-1.5 mb-3">
                   {job.tags && job.tags.map(tag => (
-                    <span key={tag} className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] text-slate-300">
+                    <span key={tag} className="px-2 py-0.5 rounded bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[10px] text-slate-600 dark:text-slate-300">
                       {tag}
                     </span>
                   ))}
@@ -155,7 +155,7 @@ const Jobs = () => {
 
                 {/* Job Description expander */}
                 {job.description && (
-                  <div className="mt-3 border-t border-white/5 pt-3">
+                  <div className="mt-3 border-t border-slate-200 dark:border-white/5 pt-3">
                     <button 
                       onClick={() => setExpandedJobId(expandedJobId === job.id ? null : job.id)}
                       className="text-xs text-[#0ea5e9] hover:underline font-medium"
@@ -164,11 +164,11 @@ const Jobs = () => {
                     </button>
                     
                     {expandedJobId === job.id && (
-                      <div className="mt-2 text-xs text-slate-300 leading-relaxed bg-black/20 p-3 rounded-lg border border-white/5">
+                      <div className="mt-2 text-xs text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-black/20 p-3 rounded-lg border border-slate-200 dark:border-white/5">
                         {job.description}
                         
                         {job.jd_url && (
-                          <div className="mt-3 pt-2 border-t border-white/5 flex items-center gap-2">
+                          <div className="mt-3 pt-2 border-t border-slate-200 dark:border-white/5 flex items-center gap-2">
                             <FileText size={12} className="text-[#0ea5e9]" />
                             <a 
                               href={job.jd_url} 
@@ -198,35 +198,35 @@ const Jobs = () => {
       </div>
 
       {showModal && selectedJob && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/60 backdrop-blur-sm">
           <GlassCard className="w-full max-w-lg p-6 relative">
-            <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+            <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
               <X size={20} />
             </button>
-            <h2 className="text-xl font-bold text-white mb-1">Apply for {selectedJob.title}</h2>
-            <p className="text-xs text-slate-400 mb-6 font-medium">{selectedJob.company}</p>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Apply for {selectedJob.title}</h2>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mb-6 font-medium">{selectedJob.company}</p>
             
             <div className="mb-6">
-              <label className="block text-xs font-semibold text-slate-300 mb-2">Select Resume to Apply With</label>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Select Resume to Apply With</label>
               {resumes.length > 0 ? (
                 <select 
                   value={selectedResumeId}
                   onChange={(e) => setSelectedResumeId(e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-[#0ea5e9] transition-colors appearance-none"
+                  className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#0ea5e9] transition-colors appearance-none"
                 >
                   {resumes.map(r => (
-                    <option key={r.id} value={r.id} className="bg-[#0f172a]">{r.title} (Score: {r.ai_score}%)</option>
+                    <option key={r.id} value={r.id} className="bg-white dark:bg-[#0f172a] text-slate-900 dark:text-white">{r.title} (Score: {r.ai_score}%)</option>
                   ))}
                 </select>
               ) : (
-                <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs leading-relaxed">
+                <div className="p-4 rounded-lg bg-red-100 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400 text-xs leading-relaxed">
                   You don't have any resumes uploaded. Please go to the Resume Builder to upload one before applying.
                 </div>
               )}
             </div>
 
             <div className="flex justify-end gap-2.5">
-              <FlatButton onClick={() => setShowModal(false)} variant="outline" className="border-white/10 text-xs text-slate-300 hover:text-white">
+              <FlatButton onClick={() => setShowModal(false)} variant="outline" className="border-slate-200 dark:border-white/10 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
                 Cancel
               </FlatButton>
               <FlatButton 
