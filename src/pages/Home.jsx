@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles, Briefcase, Building2, MousePointer2, Zap, LayoutGrid, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import FlatButton from '../components/ui/FlatButton';
+import ParticleBackground from '../components/ui/ParticleBackground';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ const Home = () => {
     <div className="w-full bg-white dark:bg-[#020617] text-slate-900 dark:text-white overflow-hidden transition-colors duration-200">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
+        <ParticleBackground />
         <div className="absolute top-[-10%] left-[-10%] w-[120%] h-[120%] bg-[radial-gradient(ellipse_at_top_left,_rgba(59,130,246,0.05),transparent_50%)]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[120%] h-[120%] bg-[radial-gradient(ellipse_at_bottom_right,_rgba(139,92,246,0.05),transparent_50%)]"></div>
 
@@ -34,14 +36,19 @@ const Home = () => {
               <span>AI-Powered Career Intelligence</span>
             </div>
 
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 leading-[1.1]">
+            <h1 className="particle-obstacle text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 leading-[1.1]">
               Build Your Future. <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-emerald-400">
+              <motion.span 
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1.2, delay: 0.6, ease: [0.25, 0.4, 0.25, 1] }}
+                className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-emerald-400"
+              >
                 One Smart Step at a Time.
-              </span>
+              </motion.span>
             </h1>
 
-            <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
+            <p className="particle-obstacle text-lg md:text-xl text-slate-600 dark:text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
               Discover your ideal path, craft standout resumes, and land your dream job with a single, intelligent platform designed for your growth.
             </p>
 

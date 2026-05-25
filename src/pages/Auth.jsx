@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import GlassCard from '../components/ui/GlassCard';
 import FlatButton from '../components/ui/FlatButton';
@@ -93,9 +94,22 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden transition-colors duration-200">
-      {/* Background blobs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      {/* Animated Background blobs */}
+      <motion.div 
+        animate={{ scale: [1, 1.4, 1], x: [0, 150, -50, 0], y: [0, -100, 50, 0] }}
+        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-1/4 left-1/4 w-[30rem] h-[30rem] bg-blue-500/50 dark:bg-blue-600/20 rounded-full blur-[100px] pointer-events-none"
+      />
+      <motion.div 
+        animate={{ scale: [1, 1.6, 1], x: [0, -150, 100, 0], y: [0, 150, -100, 0] }}
+        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+        className="absolute bottom-1/4 right-1/4 w-[35rem] h-[35rem] bg-purple-500/50 dark:bg-purple-600/20 rounded-full blur-[120px] pointer-events-none"
+      />
+      <motion.div 
+        animate={{ scale: [1, 1.5, 1], x: [0, 200, -150, 0], y: [0, 200, -150, 0] }}
+        transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[45rem] h-[45rem] bg-emerald-500/40 dark:bg-emerald-600/10 rounded-full blur-[150px] pointer-events-none"
+      />
 
       <div className="w-full max-w-md relative z-10">
         <GlassCard className="p-8">

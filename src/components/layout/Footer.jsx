@@ -2,7 +2,7 @@ import React from 'react';
 
 const Footer = () => {
   return (
-    <footer className="bg-white dark:bg-[#020617] border-t border-slate-200 dark:border-white/5 pt-16 pb-8 transition-colors duration-200">
+    <footer className="relative z-10 bg-white dark:bg-[#020617] border-t border-slate-200 dark:border-white/5 pt-16 pb-8 transition-colors duration-200">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-16">
           <div className="col-span-2 md:col-span-1">

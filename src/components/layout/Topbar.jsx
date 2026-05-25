@@ -133,14 +133,14 @@ const Topbar = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-white/5 bg-white/80 dark:bg-[#020617]/80 backdrop-blur-md transition-colors duration-200">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <NavLink to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0ea5e9] to-[#8b5cf6] flex items-center justify-center">
             <Briefcase size={18} className="text-white" />
           </div>
           <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">
             Career<span className="text-[#0ea5e9]">Connect</span>
           </span>
-        </div>
+        </NavLink>
 
         <nav className="hidden md:flex items-center gap-6">
           {navItems.map((item) => (
@@ -216,10 +216,7 @@ const Topbar = () => {
               <FlatButton variant="outline" onClick={() => { logout(); navigate('/'); }} className="text-sm py-1.5 px-5 bg-red-50 dark:bg-red-600/10 hover:bg-red-100 dark:hover:bg-red-600/20 text-red-600 dark:text-red-500 border border-red-200 dark:border-red-500/20 rounded-lg">Logout</FlatButton>
             </div>
           ) : (
-            <>
-              <button onClick={() => navigate('/auth')} className="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-white/80 dark:hover:text-white px-4 py-2 transition-colors">Log in</button>
-              <FlatButton variant="primary" onClick={() => navigate('/auth')} className="text-sm py-1.5 px-5 bg-blue-600 hover:bg-blue-700 text-white border-none rounded-lg shadow-lg shadow-blue-500/20">Sign Up</FlatButton>
-            </>
+            <FlatButton variant="primary" onClick={() => navigate('/auth')} className="text-sm py-1.5 px-5 bg-blue-600 hover:bg-blue-700 text-white border-none rounded-lg shadow-lg shadow-blue-500/20">Sign In / Join</FlatButton>
           )}
         </div>
 
