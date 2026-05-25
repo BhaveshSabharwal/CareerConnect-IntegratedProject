@@ -168,6 +168,20 @@ app.put('/api/users/:id/status', async (req, res) => {
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
+    
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
+    
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
+      return res.status(400).json({ error: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.' });
+    }
+
     const userRole = role || 'STUDENT';
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({ name, email, password_hash: hashedPassword, role: userRole });
@@ -248,6 +262,15 @@ app.post('/api/auth/reset-password', async (req, res) => {
     
     if (!email || !otp || !newPassword) {
       return res.status(400).json({ error: 'Email, OTP, and new password are required.' });
+    }
+    
+    const hasUpperCase = /[A-Z]/.test(newPassword);
+    const hasLowerCase = /[a-z]/.test(newPassword);
+    const hasNumber = /\d/.test(newPassword);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);
+
+    if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
+      return res.status(400).json({ error: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.' });
     }
     
     const storedOtp = await redisClient.get(`otp:${email}`);
