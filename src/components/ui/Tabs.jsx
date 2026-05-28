@@ -11,13 +11,13 @@ export const Tabs = ({ tabs, defaultTab, onChange }) => {
 
   return (
     <div className="w-full">
-      <div className="flex space-x-1 border-b border-white/10 mb-6 overflow-x-auto pb-1">
+      <div className="flex space-x-1 border-b border-slate-200 dark:border-white/10 mb-6 overflow-x-auto pb-1">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => handleTabChange(tab.id)}
             className={`relative px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap
-              ${activeTab === tab.id ? 'text-white' : 'text-slate-400 hover:text-slate-200'}
+              ${activeTab === tab.id ? 'text-slate-900 dark:text-white' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'}
             `}
           >
             {tab.label}

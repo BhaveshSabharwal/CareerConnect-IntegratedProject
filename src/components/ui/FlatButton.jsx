@@ -14,7 +14,7 @@ const FlatButton = ({
     primary: "bg-[#0ea5e9]/10 text-[#0ea5e9] border-[#0ea5e9]/30 hover:bg-[#0ea5e9]/20 hover:border-[#0ea5e9]/50",
     secondary: "bg-[#8b5cf6]/10 text-[#8b5cf6] border-[#8b5cf6]/30 hover:bg-[#8b5cf6]/20 hover:border-[#8b5cf6]/50",
     success: "bg-[#10b981]/10 text-[#10b981] border-[#10b981]/30 hover:bg-[#10b981]/20 hover:border-[#10b981]/50",
-    outline: "bg-transparent text-slate-300 border-white/10 hover:bg-white/5",
+    outline: "bg-transparent text-slate-700 dark:text-slate-300 border-slate-300 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5",
   };
 
   return (
